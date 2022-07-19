@@ -27,7 +27,7 @@ pub async fn lookup(word: &str) -> Result<String, reqwest::Error> {
     let client = reqwest::Client::builder().user_agent(APP_USER_AGENT).build()?;
 
     let url = generate_url(word);
-    println!("look up in youdao at {}", url);
+    //println!("look up in youdao at {}", url);
 
     let res = client.get(url).send().await?;
     let body = res.text().await?;
@@ -51,6 +51,15 @@ pub fn get_meaning(body: String, is_zh2en: bool) -> String {
             }
         }
     } else {
+        let phonetic = Selector::parse(".phonetic").unwrap();
+        for phonetic in html.select(&phonetic) {
+            let vp = phonetic.text().collect::<Vec<_>>();
+            for p in vp {
+                meaning.push_str(p);
+                meaning.push_str(" ");
+            }
+        }
+        meaning.push_str("\n");
         let trans = Selector::parse(".trans").unwrap();
         for trans in html.select(&trans) {
             let vt = trans.text().collect::<Vec<_>>();
