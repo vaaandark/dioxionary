@@ -1,6 +1,7 @@
 mod dict;
 mod history;
 use std::process::exit;
+use dict::Html;
 
 use tokio;
 
@@ -29,10 +30,17 @@ async fn main() {
         }
     };
 
-    let meaning = dict::get_meaning(body, is_zh2en);
-    println!("{}", meaning.trim());
+    let html = Html::parse_document(&body);
+    if is_zh2en {
+        println!("{}", dict::zh2en(&html).trim());
+    } else {
+        println!("{}\n{}\n", word, dict::en2zh(&html).trim());
+        let vtype = dict::get_exam_type(&html);
+        for tp in vtype {
+            print!("<{}> ", tp);
+        }
+        println!();
 
-    if !is_zh2en {
         if let Err(e) = history::add_history(word) {
             match e {
                 // maybe the word has been looked up before
@@ -45,5 +53,5 @@ async fn main() {
                 }
             }
         };
-    }
+    };
 }

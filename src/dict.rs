@@ -1,5 +1,5 @@
 use reqwest;
-use scraper::{Html, Selector};
+pub use scraper::{Html, Selector};
 
 pub fn generate_url(word: &str) -> String {
     let mut s = "https://www.youdao.com/result?word=".to_string();
@@ -34,40 +34,53 @@ pub async fn lookup(word: &str) -> Result<String, reqwest::Error> {
     Ok(body)
 }
 
-pub fn get_meaning(body: String, is_zh2en: bool) -> String {
-    let html = Html::parse_document(&body);
-    let mut meaning = "".to_string();
-    if is_zh2en {
-        let trans = Selector::parse("ul.basic").unwrap();
-        for trans in html.select(&trans) {
-            let vt = trans.text().collect::<Vec<_>>();
-            for t in vt {
-                if t.as_bytes()[0].is_ascii_digit() {
-                    meaning.push_str("\n");
-                } else {
-                    meaning.push_str(t);
-                    meaning.push_str("\n");
-                }
-            }
-        }
-    } else {
-        let phonetic = Selector::parse(".phonetic").unwrap();
-        for phonetic in html.select(&phonetic) {
-            let vp = phonetic.text().collect::<Vec<_>>();
-            for p in vp {
-                meaning.push_str(p);
-                meaning.push_str(" ");
-            }
-        }
-        meaning.push_str("\n");
-        let trans = Selector::parse(".trans").unwrap();
-        for trans in html.select(&trans) {
-            let vt = trans.text().collect::<Vec<_>>();
-            for t in vt {
+pub fn zh2en(html: &Html) -> String {
+    let mut meaning = String::new();
+    let trans = Selector::parse("ul.basic").unwrap();
+    for trans in html.select(&trans) {
+        let vt = trans.text().collect::<Vec<_>>();
+        for t in vt {
+            if t.as_bytes()[0].is_ascii_digit() {
+                meaning.push_str("\n");
+            } else {
                 meaning.push_str(t);
                 meaning.push_str("\n");
             }
         }
     }
     meaning
+}
+
+pub fn en2zh(html: &Html) -> String {
+    let mut meaning = String::new();
+    let phonetic = Selector::parse(".phonetic").unwrap();
+    for phonetic in html.select(&phonetic) {
+        let vp = phonetic.text().collect::<Vec<_>>();
+        for p in vp {
+            meaning.push_str(p);
+            meaning.push_str(" ");
+        }
+    }
+    meaning.push_str("\n");
+    let trans = Selector::parse(".trans").unwrap();
+    for trans in html.select(&trans) {
+        let vt = trans.text().collect::<Vec<_>>();
+        for t in vt {
+            meaning.push_str(t);
+            meaning.push_str("\n");
+        }
+    }
+    meaning
+}
+
+pub fn get_exam_type(html: &Html) -> Vec<String> {
+    let types = Selector::parse(".exam_type-value").unwrap();
+    let mut vtype: Vec<String> = Vec::new();
+    for types in html.select(&types) {
+        let vtp = types.text().collect::<Vec<_>>();
+        for t in vtp {
+            vtype.push(t.to_string());
+        }
+    }
+    vtype
 }
