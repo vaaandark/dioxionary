@@ -10,3 +10,6 @@ reqwest = "0.11.11"
 tokio = { version = "1.20.0", features = ["full"] }
 hyper = "0.14.20"
 scraper = "0.13.0"
+dirs = "4.0.0"
+rusqlite = "0.28.0"
+chrono = "0.4"
