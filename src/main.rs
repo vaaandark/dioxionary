@@ -34,12 +34,15 @@ async fn main() {
     if is_zh2en {
         println!("{}", dict::zh2en(&html).trim());
     } else {
-        println!("{}\n{}\n", word, dict::en2zh(&html).trim());
+        println!("{}\n{}", word, dict::en2zh(&html).trim());
         let vtype = dict::get_exam_type(&html);
-        for tp in vtype {
-            print!("<{}> ", tp);
+        if !vtype.is_empty() {
+            println!();
+            for tp in vtype {
+                print!("<{}> ", tp);
+            }
+            println!();
         }
-        println!();
 
         if let Err(e) = history::add_history(word) {
             match e {
