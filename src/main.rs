@@ -32,9 +32,21 @@ async fn main() {
 
     let html = Html::parse_document(&body);
     if is_zh2en {
-        println!("{}", dict::zh2en(&html).trim());
+        let meaning = dict::zh2en(&html);
+        if meaning.trim().len() == 0 {
+            println!("`{}` is not found", word);
+            exit(1);
+        } else {
+            println!("{}", meaning.trim());
+        }
     } else {
-        println!("{}\n{}", word, dict::en2zh(&html).trim());
+        let meaning = dict::en2zh(&html);
+        if meaning.trim().len() == 0 {
+            println!("`{}` is not found", word);
+            exit(1);
+        }
+
+        println!("{}\n{}", word, meaning.trim());
         let vtype = dict::get_exam_type(&html);
         if !vtype.is_empty() {
             println!();

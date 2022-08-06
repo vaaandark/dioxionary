@@ -55,6 +55,13 @@ pub fn add_history(word: String) -> Result<()> {
 pub fn list_history() -> Result<()> {
 	let mut path = check_cache();
 	path.push("rmall.db");
+
+	// lack of error handling now
+	// conside it as OK
+	if !path.exists() {
+		return Ok(());
+	}
+
     let conn = Connection::open(&path)?;
 
     let mut stmt = conn.prepare("SELECT word, date FROM HIST")?;
