@@ -19,11 +19,7 @@ pub fn is_enword(word: &str) -> bool {
 
 pub async fn lookup(word: &str) -> Result<String, reqwest::Error> {
     // header
-    static APP_USER_AGENT: &str = concat!(
-        env!("CARGO_PKG_NAME"),
-        "/",
-        env!("CARGO_PKG_VERSION"),
-    );
+    static APP_USER_AGENT: &str = "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/106.0.0.0 Mobile Safari/537.36";
     let client = reqwest::Client::builder().user_agent(APP_USER_AGENT).build()?;
 
     let url = generate_url(word);
