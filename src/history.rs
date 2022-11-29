@@ -25,9 +25,9 @@ struct Hist {
 }
 
 #[allow(unused)]
-pub fn add_history(word: String) -> Result<()> {
+pub fn add_history(word: &str) -> Result<()> {
 	let date = Utc::now().timestamp();
-	let hist = Hist { word, date };
+	let hist = Hist { word: word.to_string(), date };
 
 	let mut path = check_cache();
 	path.push("rmall.db");
