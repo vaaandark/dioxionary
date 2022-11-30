@@ -19,18 +19,22 @@ async fn main() {
         exit(0);
     }
 
-    let word = dict::lookup(&word).await;
-    println!("{}", word);
-
-    if word.is_en() {
-        match history::add_history(word.word()) {
-            Ok(_) => (),
-            // maybe the word has been looked up before
-            Err(rusqlite::Error::SqliteFailure(_, _)) => (),
-            Err(_) => {
-                eprintln!("rmall: cannot add history");
-                exit(1);
+    let item = dict::lookup(&word).await;
+    if let Some(word) = item {
+        println!("{}", word);
+        if word.is_en() {
+            match history::add_history(word.word()) {
+                Ok(_) => (),
+                // maybe the word has been looked up before
+                Err(rusqlite::Error::SqliteFailure(_, _)) => (),
+                Err(_) => {
+                    eprintln!("rmall: cannot add history");
+                    exit(1);
+                }
             }
         }
+    } else {
+        println!("`{}` is not found", word);
+        exit(1);
     }
 }

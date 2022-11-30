@@ -101,7 +101,7 @@ impl fmt::Display for WordItem {
     }
 }
 
-pub async fn lookup(word: &str) -> WordItem {
+pub async fn lookup(word: &str) -> Option<WordItem> {
     let html = match get_html(&word).await {
         Ok(html) => html,
         Err(e) => {
@@ -110,12 +110,17 @@ pub async fn lookup(word: &str) -> WordItem {
     };
     let is_en = is_enword(word);
     let trans = match is_en {
-        true => en2zh(&html),
-        false => zh2en(&html)
+        true => en2zh(&html).trim().to_string(),
+        false => zh2en(&html).trim().to_string()
     };
-    let types = match is_en {
-        true => Some(get_exam_type(&html)),
-        false => None
-    };
-    WordItem::new(word.to_string(), is_en, trans, types)
+    // cannot find the word
+    if trans.is_empty() {
+        None
+    } else {
+        let types = match is_en {
+            true => Some(get_exam_type(&html)),
+            false => None
+        };
+        Some(WordItem::new(word.to_string(), is_en, trans, types))
+    }
 }
