@@ -1,12 +1,14 @@
 use scraper::{Html, Selector};
 use std::fmt;
+use itertools::Itertools;
+use itertools::EitherOrBoth::{Both, Left, Right};
 
 fn gen_url(word: &str) -> String {
     format!("https://www.youdao.com/result?word={}&lang=en", word)
 }
 
 fn is_enword(word: &str) -> bool {
-    word.as_bytes().into_iter().all(|x| x.is_ascii_alphabetic())
+    word.as_bytes().into_iter().all(|x| x.is_ascii_alphabetic() || x.is_ascii_whitespace())
 }
 
 async fn get_html(word: &str) -> Result<Html, reqwest::Error> {
@@ -40,13 +42,27 @@ fn en2zh(html: &Html) -> String {
         });
     });
     res.push_str("\n");
+    let mut pos_text: Vec<&str> = Vec::new();
+    let pos = Selector::parse(".pos").unwrap();
+    html.select(&pos).into_iter().for_each(|x| {
+        x.text().collect::<Vec<_>>().iter().for_each(|x| {
+            pos_text.push(*x);
+        });
+    });
+    let mut trans_text: Vec<&str> = Vec::new();
     let trans = Selector::parse(".trans").unwrap();
     html.select(&trans).into_iter().for_each(|x| {
         x.text().collect::<Vec<_>>().iter().for_each(|x| {
-            res.push_str(x);
-            res.push_str("\n");
+            trans_text.push(*x);
         });
     });
+    for i in pos_text.iter().zip_longest(trans_text.iter()).map(|x| match x {
+        Both(a, b) => (a, b),
+        Left(a) => (a, &""),
+        Right(b) => (&"", b),
+    }) {
+        res.push_str(format!("{} {}\n", i.0, i.1).as_str());
+    }
     res
 }
 
