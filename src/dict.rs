@@ -34,7 +34,7 @@ fn zh2en(html: &Html) -> String {
 
 fn en2zh(html: &Html) -> String {
     let mut res = String::new();
-    let phonetic = Selector::parse(".phonetic").unwrap();
+    let phonetic = Selector::parse(".per-phone").unwrap();
     html.select(&phonetic).into_iter().for_each(|x| {
         x.text().collect::<Vec<_>>().iter().for_each(|x| {
             res.push_str(x);
