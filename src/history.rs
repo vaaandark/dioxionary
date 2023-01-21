@@ -1,9 +1,10 @@
 use chrono::Utc;
 use dirs::cache_dir;
 use prettytable::{Attr, Cell, Row, Table};
-use rusqlite::{Connection, Result};
+use rusqlite::Connection;
 use std::fs::create_dir;
 use std::path::PathBuf;
+use crate::error::Result;
 
 static ALLOWED_TYPES: [&str; 8] = [
     "CET4", "CET6", "CET8", "TOEFL", "IELTS", "GMAT", "GRE", "SAT",
@@ -138,7 +139,7 @@ pub fn count_history() -> Result<()> {
         .map(|x| {
             let stmt = format!("SELECT COUNT(*) FROM HISTORY WHERE {} = 1", x);
             let mut stmt = conn.prepare(&stmt).unwrap();
-            let res = stmt.query_row([], |row| row.get(0) as Result<i32>);
+            let res = stmt.query_row([], |row| row.get(0) as rusqlite::Result<i32>);
             Cell::new(&res.unwrap().to_string())
         })
         .collect();

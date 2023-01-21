@@ -1,41 +1,28 @@
-use rmall::cli::{Action, Cli, Parser};
-use rmall::dict;
-use rmall::history;
-use std::process::exit;
+use rmall::{
+    cli::{Action, Cli, Parser},
+    dict,
+    error::{Error, Result},
+    history
+};
 use tokio;
 
 #[tokio::main]
-async fn main() {
+async fn main() -> Result<()> {
     let cli: Cli = Cli::parse();
 
     match cli.action {
-        Action::Count => {
-            if let Err(_) = history::count_history() {
-                eprintln!("rmall: cannot count the records");
-            };
-        }
-        Action::List(t) => {
-            if let Err(_) = history::list_history(t.type_) {
-                eprintln!("rmall: cannot list the records");
-            };
-        }
+        Action::Count => history::count_history(),
+        Action::List(t) => history::list_history(t.type_),
         Action::Lookup(w) => {
-            let word = w.word;
-            let item = dict::lookup(&word).await;
+            let item = dict::lookup(&w.word).await;
             if let Some(word) = item {
                 println!("{}", word);
                 if word.is_en() {
-                    match history::add_history(word.word(), word.types()) {
-                        Ok(_) => (),
-                        Err(_) => {
-                            eprintln!("rmall: cannot add history");
-                            exit(1);
-                        }
-                    }
+                    history::add_history(word.word(), word.types())?;
                 }
+                Ok(())
             } else {
-                println!("`{}` is not found", word);
-                exit(1);
+                Err(Error::WordNotFound)
             }
         }
     }
