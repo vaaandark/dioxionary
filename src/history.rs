@@ -1,10 +1,10 @@
+use crate::error::Result;
 use chrono::Utc;
 use dirs::cache_dir;
 use prettytable::{Attr, Cell, Row, Table};
 use rusqlite::Connection;
 use std::fs::create_dir;
 use std::path::PathBuf;
-use crate::error::Result;
 
 static ALLOWED_TYPES: [&str; 8] = [
     "CET4", "CET6", "CET8", "TOEFL", "IELTS", "GMAT", "GRE", "SAT",
@@ -24,19 +24,8 @@ pub fn check_cache() -> PathBuf {
 }
 
 #[allow(unused)]
-#[derive(Debug)]
-struct Hist {
-    word: String,
-    date: i64,
-}
-
-#[allow(unused)]
 pub fn add_history(word: &str, types: &Option<Vec<String>>) -> Result<()> {
     let date = Utc::now().timestamp();
-    let hist = Hist {
-        word: word.to_string(),
-        date,
-    };
 
     let mut path = check_cache();
     path.push("rmall.db");
@@ -60,7 +49,7 @@ pub fn add_history(word: &str, types: &Option<Vec<String>>) -> Result<()> {
 
     conn.execute(
         "INSERT OR IGNORE INTO HISTORY (word, date) VALUES (?1, ?2)",
-        (&hist.word, &hist.date),
+        (word, date),
     )?;
 
     if let Some(types) = types {
@@ -78,17 +67,11 @@ pub fn add_history(word: &str, types: &Option<Vec<String>>) -> Result<()> {
 }
 
 #[allow(unused)]
-pub fn list_history(type_: Option<String>) -> Result<()> {
+pub fn list_history(type_: Option<String>, sort: bool, table: bool, column: usize) -> Result<()> {
     let mut path = check_cache();
     path.push("rmall.db");
 
-    // lack of error handling now
-    // conside it as OK
-    if !path.exists() {
-        return Ok(());
-    }
-
-    let mut stmt = "SELECT word, date FROM HISTORY".to_string();
+    let mut stmt = "SELECT WORD, DATE FROM HISTORY".to_string();
 
     if let Some(type_) = type_ {
         if ALLOWED_TYPES.contains(&type_.as_str()) {
@@ -100,15 +83,28 @@ pub fn list_history(type_: Option<String>) -> Result<()> {
 
     let mut stmt = conn.prepare(&stmt)?;
     let word_iter = stmt.query_map([], |row| {
-        Ok(Hist {
-            word: row.get(0)?,
-            date: row.get(1)?,
-        })
+        row.get(0) as rusqlite::Result<String>
     })?;
 
-    for w in word_iter {
-        let h = w.unwrap();
-        println!("{}", h.word);
+    let mut words: Vec<String> = word_iter
+        .filter(|x| x.is_ok())
+        .map(|x| x.unwrap())
+        .collect();
+
+    if sort {
+        words.sort();
+    }
+
+    if table {
+        let mut table = Table::new();
+        words.chunks(column).into_iter().for_each(|x| {
+            table.add_row(x.into_iter().map(|x| Cell::new(x)).collect());
+        });
+        table.printstd();
+    } else {
+        words.into_iter().for_each(|x| {
+            println!("{}", x);
+        });
     }
 
     Ok(())
@@ -117,12 +113,6 @@ pub fn list_history(type_: Option<String>) -> Result<()> {
 pub fn count_history() -> Result<()> {
     let mut path = check_cache();
     path.push("rmall.db");
-
-    // lack of error handling now
-    // conside it as OK
-    if !path.exists() {
-        return Ok(());
-    }
 
     let conn = Connection::open(&path)?;
 

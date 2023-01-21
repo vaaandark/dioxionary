@@ -12,7 +12,9 @@ async fn main() -> Result<()> {
 
     match cli.action {
         Action::Count => history::count_history(),
-        Action::List(t) => history::list_history(t.type_),
+        Action::List(t) => {
+            history::list_history(t.type_, t.sort, t.table, t.column)
+        }
         Action::Lookup(w) => {
             let item = dict::lookup(&w.word).await;
             if let Some(word) = item {

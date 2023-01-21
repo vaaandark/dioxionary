@@ -26,10 +26,22 @@ pub enum Action {
 
 #[derive(Args, Debug)]
 pub struct Lookup {
-    pub word: String
+    pub word: String,
 }
 
 #[derive(Args, Debug)]
 pub struct List {
-    pub type_: Option<String>
+    /// sort lexicographically
+    #[arg(short, long, default_value_t = false)]
+    pub sort: bool,
+
+    /// output to a table
+    #[arg(short, long, default_value_t = false, group = "output_format")]
+    pub table: bool,
+
+    /// the number of columns in the table
+    #[arg(short, long, default_value_t = 5, requires = "output_format")]
+    pub column: usize,
+
+    pub type_: Option<String>,
 }
