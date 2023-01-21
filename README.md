@@ -38,7 +38,7 @@ $ rmall lookup <WORD>
 ### 列出记录
 
 ```console
-$ rmall list [TYPE]
+$ rmall list [OPTIONS] [TYPE]
 ```
 
 以下为支持的单词类型：
