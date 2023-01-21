@@ -1,5 +1,6 @@
 use chrono::Utc;
 use dirs::cache_dir;
+use prettytable::{Attr, Cell, Row, Table};
 use rusqlite::{Connection, Result};
 use std::fs::create_dir;
 use std::path::PathBuf;
@@ -76,7 +77,7 @@ pub fn add_history(word: &str, types: &Option<Vec<String>>) -> Result<()> {
 }
 
 #[allow(unused)]
-pub fn list_history(type_: String) -> Result<()> {
+pub fn list_history(type_: Option<String>) -> Result<()> {
     let mut path = check_cache();
     path.push("rmall.db");
 
@@ -88,7 +89,7 @@ pub fn list_history(type_: String) -> Result<()> {
 
     let mut stmt = "SELECT word, date FROM HISTORY".to_string();
 
-    if type_ != "all" {
+    if let Some(type_) = type_ {
         if ALLOWED_TYPES.contains(&type_.as_str()) {
             stmt.push_str(format!(" WHERE {} = 1", type_).as_str())
         }
@@ -108,6 +109,43 @@ pub fn list_history(type_: String) -> Result<()> {
         let h = w.unwrap();
         println!("{}", h.word);
     }
+
+    Ok(())
+}
+
+pub fn count_history() -> Result<()> {
+    let mut path = check_cache();
+    path.push("rmall.db");
+
+    // lack of error handling now
+    // conside it as OK
+    if !path.exists() {
+        return Ok(());
+    }
+
+    let conn = Connection::open(&path)?;
+
+    let header: Row = ALLOWED_TYPES
+        .into_iter()
+        .map(|x| Cell::new(x).with_style(Attr::Bold))
+        .collect();
+
+    let mut table: Table = Table::new();
+    table.add_row(header);
+
+    let body: Row = ALLOWED_TYPES
+        .into_iter()
+        .map(|x| {
+            let stmt = format!("SELECT COUNT(*) FROM HISTORY WHERE {} = 1", x);
+            let mut stmt = conn.prepare(&stmt).unwrap();
+            let res = stmt.query_row([], |row| row.get(0) as Result<i32>);
+            Cell::new(&res.unwrap().to_string())
+        })
+        .collect();
+
+    table.add_row(body);
+
+    table.printstd();
 
     Ok(())
 }

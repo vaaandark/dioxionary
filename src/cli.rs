@@ -1,16 +1,35 @@
-pub use clap::Parser;
+pub use clap::{Parser, Args};
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None, after_help =
 "Examples:
-  `rmall -l all` to list all
+  `rmall list` to list all
   you can also list the following types:
     'CET4', 'CET6', 'CET8', 'TOEFL', 'IELTS', 'GMAT', 'GRE', 'SAT'"
 )]
-pub struct Args {
-    /// list the records by the type of words
-    #[arg(short, long)]
-    pub list: Option<String>,
+pub struct Cli {
+    #[command(subcommand)]
+    pub action: Action,
+}
 
-    pub word: Option<String>,
+#[derive(clap::Subcommand, Debug)]
+pub enum Action {
+    /// lookup the following word
+    Lookup(Lookup),
+
+    /// list the specific types of records
+    List(List),
+
+    /// count the number of each type
+    Count,
+}
+
+#[derive(Args, Debug)]
+pub struct Lookup {
+    pub word: String
+}
+
+#[derive(Args, Debug)]
+pub struct List {
+    pub type_: Option<String>
 }
