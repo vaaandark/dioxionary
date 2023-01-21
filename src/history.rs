@@ -1,20 +1,20 @@
+use chrono::Utc;
 use dirs::cache_dir;
+use rusqlite::{Connection, Result};
 use std::fs::create_dir;
 use std::path::PathBuf;
-use rusqlite::{Connection, Result};
-use chrono::Utc;
 
 #[allow(unused)]
 pub fn check_cache() -> PathBuf {
-	let mut cache = match cache_dir() {
-		Some(dir) => dir,
-		_ => {
-			panic!("rmall: cannot create cache dir")
-		}
-	};
-	cache.push("rmall");
-	create_dir(&cache);
-	cache
+    let mut cache = match cache_dir() {
+        Some(dir) => dir,
+        _ => {
+            panic!("rmall: cannot create cache dir")
+        }
+    };
+    cache.push("rmall");
+    create_dir(&cache);
+    cache
 }
 
 #[allow(unused)]
@@ -26,41 +26,44 @@ struct Hist {
 
 #[allow(unused)]
 pub fn add_history(word: &str) -> Result<()> {
-	let date = Utc::now().timestamp();
-	let hist = Hist { word: word.to_string(), date };
+    let date = Utc::now().timestamp();
+    let hist = Hist {
+        word: word.to_string(),
+        date,
+    };
 
-	let mut path = check_cache();
-	path.push("rmall.db");
+    let mut path = check_cache();
+    path.push("rmall.db");
 
-	let db_exist = path.exists();
+    let db_exist = path.exists();
 
     let conn = Connection::open(&path)?;
-	if !db_exist {
-		conn.execute(
-			"CREATE TABLE HIST (
-				word TEXT PRIMARY KEY,
-				date INTEGER NOT NULL
+    if !db_exist {
+        conn.execute(
+            "CREATE TABLE HIST (
+			word TEXT PRIMARY KEY,
+			date INTEGER NOT NULL
 			)",
-			(), // empty list of parameters.
-		)?;
-	}
+            (), // empty list of parameters.
+        )?;
+    }
     conn.execute(
         "INSERT INTO HIST (word, date) VALUES (?1, ?2)",
         (&hist.word, &hist.date),
     )?;
-	Ok(())
+    Ok(())
 }
 
 #[allow(unused)]
 pub fn list_history() -> Result<()> {
-	let mut path = check_cache();
-	path.push("rmall.db");
+    let mut path = check_cache();
+    path.push("rmall.db");
 
-	// lack of error handling now
-	// conside it as OK
-	if !path.exists() {
-		return Ok(());
-	}
+    // lack of error handling now
+    // conside it as OK
+    if !path.exists() {
+        return Ok(());
+    }
 
     let conn = Connection::open(&path)?;
 
@@ -73,9 +76,9 @@ pub fn list_history() -> Result<()> {
     })?;
 
     for w in word_iter {
-		let h = w.unwrap();
+        let h = w.unwrap();
         println!("{}", h.word);
     }
 
-	Ok(())
+    Ok(())
 }

@@ -8,7 +8,7 @@ use tokio;
 async fn main() {
     let word = match std::env::args().nth(1) {
         Some(arg) => arg,
-        _ => "rust".to_string()
+        _ => "rust".to_string(),
     };
 
     if word.as_str() == "-l" {

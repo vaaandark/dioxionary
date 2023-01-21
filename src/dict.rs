@@ -1,19 +1,23 @@
+use itertools::EitherOrBoth::{Both, Left, Right};
+use itertools::Itertools;
 use scraper::{Html, Selector};
 use std::fmt;
-use itertools::Itertools;
-use itertools::EitherOrBoth::{Both, Left, Right};
 
 fn gen_url(word: &str) -> String {
     format!("https://www.youdao.com/result?word={}&lang=en", word)
 }
 
 fn is_enword(word: &str) -> bool {
-    word.as_bytes().into_iter().all(|x| x.is_ascii_alphabetic() || x.is_ascii_whitespace())
+    word.as_bytes()
+        .into_iter()
+        .all(|x| x.is_ascii_alphabetic() || x.is_ascii_whitespace())
 }
 
 async fn get_html(word: &str) -> Result<Html, reqwest::Error> {
     static APP_USER_AGENT: &str = "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/106.0.0.0 Mobile Safari/537.36";
-    let client = reqwest::Client::builder().user_agent(APP_USER_AGENT).build()?;
+    let client = reqwest::Client::builder()
+        .user_agent(APP_USER_AGENT)
+        .build()?;
     let url = gen_url(word);
     let res = client.get(url).send().await?;
     let body = res.text().await?;
@@ -56,11 +60,15 @@ fn en2zh(html: &Html) -> String {
             trans_text.push(*x);
         });
     });
-    for i in pos_text.iter().zip_longest(trans_text.iter()).map(|x| match x {
-        Both(a, b) => (a, b),
-        Left(a) => (a, &""),
-        Right(b) => (&"", b),
-    }) {
+    for i in pos_text
+        .iter()
+        .zip_longest(trans_text.iter())
+        .map(|x| match x {
+            Both(a, b) => (a, b),
+            Left(a) => (a, &""),
+            Right(b) => (&"", b),
+        })
+    {
         res.push_str(format!("{} {}\n", i.0, i.1).as_str());
     }
     res
@@ -70,9 +78,10 @@ fn get_exam_type(html: &Html) -> Vec<String> {
     let types = Selector::parse(".exam_type-value").unwrap();
     let mut res: Vec<String> = Vec::new();
     html.select(&types).into_iter().for_each(|x| {
-        x.text().collect::<Vec<_>>().iter().for_each(|x| {
-            res.push(x.to_string())
-        })
+        x.text()
+            .collect::<Vec<_>>()
+            .iter()
+            .for_each(|x| res.push(x.to_string()))
     });
     res
 }
@@ -81,12 +90,17 @@ pub struct WordItem {
     word: String,
     is_en: bool,
     trans: String,
-    types: Option<Vec<String>>
+    types: Option<Vec<String>>,
 }
 
 impl WordItem {
     pub fn new(word: String, is_en: bool, trans: String, types: Option<Vec<String>>) -> WordItem {
-        WordItem { word, is_en, trans, types }
+        WordItem {
+            word,
+            is_en,
+            trans,
+            types,
+        }
     }
     pub fn is_en(&self) -> bool {
         self.is_en
@@ -109,9 +123,9 @@ impl fmt::Display for WordItem {
         let mut types_content = String::new();
         if let Some(types) = &self.types {
             types_content.push_str("\n");
-            types.iter().for_each(|x| {
-                types_content.push_str(&format!("<{}> ", x))
-            })
+            types
+                .iter()
+                .for_each(|x| types_content.push_str(&format!("<{}> ", x)))
         };
         write!(f, "{}\n{}{}", self.word, self.trans.trim(), types_content)
     }
@@ -127,7 +141,7 @@ pub async fn lookup(word: &str) -> Option<WordItem> {
     let is_en = is_enword(word);
     let trans = match is_en {
         true => en2zh(&html).trim().to_string(),
-        false => zh2en(&html).trim().to_string()
+        false => zh2en(&html).trim().to_string(),
     };
     // cannot find the word
     if trans.is_empty() {
@@ -135,7 +149,7 @@ pub async fn lookup(word: &str) -> Option<WordItem> {
     } else {
         let types = match is_en {
             true => Some(get_exam_type(&html)),
-            false => None
+            false => None,
         };
         Some(WordItem::new(word.to_string(), is_en, trans, types))
     }
