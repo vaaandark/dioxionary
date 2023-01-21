@@ -14,3 +14,4 @@ dirs = "4.0.0"
 rusqlite = "0.28.0"
 chrono = "0.4"
 itertools = "0.10.5"
+clap = { version = "4.1.1", features = ["derive"] }
