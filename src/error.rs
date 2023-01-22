@@ -6,9 +6,25 @@ pub enum Error {
     #[error("transparent")]
     WordNotFound,
 
-    /// Some thing wrong with sqlite or your sql statements
+    /// Something wrong with sqlite or your sql statements
     #[error("transparent")]
-    Sqlite(#[from] rusqlite::Error)
+    Sqlite(#[from] rusqlite::Error),
+
+    /// Something wrong with cache directory
+    #[error("transparent")]
+    CacheDirNotFound,
+
+    /// Something wrong with creating directory
+    #[error("transparent")]
+    CannotCreateDir(#[from] std::io::Error),
+
+    /// Something wrong with network
+    #[error("transparent")]
+    NetworkError(#[from] reqwest::Error),
+
+    /// Something wrong with html parsing
+    #[error("transparent")]
+    ParsingError,
 }
 
 pub type Result<T> = std::result::Result<T, Error>;

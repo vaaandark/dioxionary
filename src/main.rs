@@ -1,8 +1,8 @@
 use rmall::{
     cli::{Action, Cli, Parser},
     dict,
-    error::{Error, Result},
-    history
+    error::Result,
+    history,
 };
 use tokio;
 
@@ -12,20 +12,14 @@ async fn main() -> Result<()> {
 
     match cli.action {
         Action::Count => history::count_history(),
-        Action::List(t) => {
-            history::list_history(t.type_, t.sort, t.table, t.column)
-        }
+        Action::List(t) => history::list_history(t.type_, t.sort, t.table, t.column),
         Action::Lookup(w) => {
-            let item = dict::lookup(&w.word).await;
-            if let Some(word) = item {
-                println!("{}", word);
-                if word.is_en() {
-                    history::add_history(word.word(), word.types())?;
-                }
-                Ok(())
-            } else {
-                Err(Error::WordNotFound)
+            let word = dict::lookup(&w.word).await?;
+            println!("{}", word);
+            if word.is_en() {
+                history::add_history(word.word(), word.types())?;
             }
+            Ok(())
         }
     }
 }

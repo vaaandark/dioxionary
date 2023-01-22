@@ -1,3 +1,4 @@
+use crate::error::{Error, Result};
 use itertools::EitherOrBoth::{Both, Left, Right};
 use itertools::Itertools;
 use scraper::{Html, Selector};
@@ -13,7 +14,7 @@ fn is_enword(word: &str) -> bool {
         .all(|x| x.is_ascii_alphabetic() || x.is_ascii_whitespace())
 }
 
-async fn get_html(word: &str) -> Result<Html, reqwest::Error> {
+async fn get_html(word: &str) -> Result<Html> {
     static APP_USER_AGENT: &str = "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/106.0.0.0 Mobile Safari/537.36";
     let client = reqwest::Client::builder()
         .user_agent(APP_USER_AGENT)
@@ -24,21 +25,21 @@ async fn get_html(word: &str) -> Result<Html, reqwest::Error> {
     Ok(Html::parse_document(&body))
 }
 
-fn zh2en(html: &Html) -> String {
+fn zh2en(html: &Html) -> Result<String> {
     let mut res = String::new();
-    let trans = Selector::parse("ul.basic").unwrap();
+    let trans = Selector::parse("ul.basic").map_err(|_| Error::ParsingError)?;
     html.select(&trans).into_iter().for_each(|x| {
         x.text().collect::<Vec<_>>().iter().for_each(|x| {
             res.push_str(x);
             res.push_str("\n");
         });
     });
-    res
+    Ok(res)
 }
 
-fn en2zh(html: &Html) -> String {
+fn en2zh(html: &Html) -> Result<String> {
     let mut res = String::new();
-    let phonetic = Selector::parse(".per-phone").unwrap();
+    let phonetic = Selector::parse(".per-phone").map_err(|_| Error::ParsingError)?;
     html.select(&phonetic).into_iter().for_each(|x| {
         x.text().collect::<Vec<_>>().iter().for_each(|x| {
             res.push_str(x);
@@ -47,14 +48,14 @@ fn en2zh(html: &Html) -> String {
     });
     res.push_str("\n");
     let mut pos_text: Vec<&str> = Vec::new();
-    let pos = Selector::parse(".pos").unwrap();
+    let pos = Selector::parse(".pos").map_err(|_| Error::ParsingError)?;
     html.select(&pos).into_iter().for_each(|x| {
         x.text().collect::<Vec<_>>().iter().for_each(|x| {
             pos_text.push(*x);
         });
     });
     let mut trans_text: Vec<&str> = Vec::new();
-    let trans = Selector::parse(".trans").unwrap();
+    let trans = Selector::parse(".trans").map_err(|_| Error::ParsingError)?;
     html.select(&trans).into_iter().for_each(|x| {
         x.text().collect::<Vec<_>>().iter().for_each(|x| {
             trans_text.push(*x);
@@ -71,11 +72,11 @@ fn en2zh(html: &Html) -> String {
     {
         res.push_str(format!("{} {}\n", i.0, i.1).as_str());
     }
-    res
+    Ok(res)
 }
 
-fn get_exam_type(html: &Html) -> Vec<String> {
-    let types = Selector::parse(".exam_type-value").unwrap();
+fn get_exam_type(html: &Html) -> Result<Vec<String>> {
+    let types = Selector::parse(".exam_type-value").map_err(|_| Error::ParsingError)?;
     let mut res: Vec<String> = Vec::new();
     html.select(&types).into_iter().for_each(|x| {
         x.text()
@@ -83,7 +84,7 @@ fn get_exam_type(html: &Html) -> Vec<String> {
             .iter()
             .for_each(|x| res.push(x.to_string()))
     });
-    res
+    Ok(res)
 }
 
 pub struct WordItem {
@@ -131,26 +132,20 @@ impl fmt::Display for WordItem {
     }
 }
 
-pub async fn lookup(word: &str) -> Option<WordItem> {
-    let html = match get_html(&word).await {
-        Ok(html) => html,
-        Err(e) => {
-            panic!("rmall: {:?}", e)
-        }
-    };
+pub async fn lookup(word: &str) -> Result<WordItem> {
+    let html = get_html(&word).await?;
     let is_en = is_enword(word);
-    let trans = match is_en {
-        true => en2zh(&html).trim().to_string(),
-        false => zh2en(&html).trim().to_string(),
-    };
+    let dirction = if is_en { en2zh } else { zh2en };
+    let trans = dirction(&html)?.trim().to_string();
     // cannot find the word
     if trans.is_empty() {
-        None
+        Err(Error::WordNotFound)
     } else {
-        let types = match is_en {
-            true => Some(get_exam_type(&html)),
-            false => None,
+        let types = if is_en {
+            Some(get_exam_type(&html)?)
+        } else {
+            None
         };
-        Some(WordItem::new(word.to_string(), is_en, trans, types))
+        Ok(WordItem::new(word.to_string(), is_en, trans, types))
     }
 }
