@@ -121,14 +121,14 @@ impl WordItem {
 
 impl fmt::Display for WordItem {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let mut types_content = String::new();
+        let mut types_contents = String::new();
         if let Some(types) = &self.types {
-            types_content.push_str("\n");
+            types_contents.push_str("\n");
             types
                 .iter()
-                .for_each(|x| types_content.push_str(&format!("<{}> ", x)))
+                .for_each(|x| types_contents.push_str(&format!("<{}> ", x)))
         };
-        write!(f, "{}\n{}{}", self.word, self.trans.trim(), types_content)
+        write!(f, "{}\n{}{}", self.word, self.trans.trim(), types_contents)
     }
 }
 

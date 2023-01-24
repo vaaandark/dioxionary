@@ -163,7 +163,7 @@ impl Ifo {
 
 #[allow(unused)]
 struct Dict {
-    content: String,
+    contents: String,
 }
 
 #[allow(unused)]
@@ -171,14 +171,14 @@ impl<'a> Dict {
     fn new(path: PathBuf) -> Result<Dict> {
         let s = read(path).map_err(|x| Error::CannotOpenDictFile)?;
         let mut d = GzDecoder::new(s.as_slice());
-        let mut content = String::new();
-        d.read_to_string(&mut content)
+        let mut contents = String::new();
+        d.read_to_string(&mut contents)
             .map_err(|_| Error::DictFileError)?;
-        Ok(Dict { content })
+        Ok(Dict { contents })
     }
 
     fn get(&'a self, offset: usize, size: usize) -> &'a str {
-        &self.content[offset..offset + size]
+        &self.contents[offset..offset + size]
     }
 }
 
