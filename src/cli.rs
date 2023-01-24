@@ -41,8 +41,12 @@ pub enum Action {
 #[derive(Args, Debug)]
 pub struct Lookup {
     /// use local dictionary
-    #[arg(short, long)]
+    #[arg(short, long, group = "use_local")]
     pub local: Option<String>,
+
+    /// try local dictionary first, then the net
+    #[arg(short = 'L', long, requires = "use_local")]
+    pub local_first: bool,
 
     pub word: String,
 }

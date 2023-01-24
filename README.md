@@ -13,7 +13,7 @@ Remember all words in terminal!
 ### 自行编译
 
 ```console
-cargo build --releases
+cargo install --git https://github.com/vaaandark/rmall
 ```
 
 ### 下载预构建二进制
@@ -51,6 +51,8 @@ Their prefixes must be the same as the dirname.
 ```console
 $ lookup -l <DICTDIR> <WORD>
 ```
+
+使用 `-L` 选项则会在本地查询失败后使用网络词典。
 
 ### 列出记录
 

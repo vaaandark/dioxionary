@@ -17,8 +17,20 @@ async fn main() -> Result<()> {
         Action::Lookup(w) => {
             if let Some(path) = w.local {
                 let stardict = StarDict::new(path.into())?;
-                let trans = stardict.quick_lookup(&w.word)?;
-                println!("{}\n{}", w.word, trans);
+                if let Ok(trans) = stardict.quick_lookup(&w.word) {
+                    println!("{}\n{}", w.word, trans);
+                    history::add_history(&w.word, &None)?;
+                } else {
+                    if w.local_first {
+                        let word = dict::lookup(&w.word).await?;
+                        println!("{}", word);
+                        if word.is_en() {
+                            history::add_history(word.word(), word.types())?;
+                        }
+                    } else {
+                        return Err(rmall::error::Error::WordNotFound);
+                    }
+                }
             } else {
                 let word = dict::lookup(&w.word).await?;
                 println!("{}", word);
