@@ -4,7 +4,7 @@ use thiserror::Error;
 pub enum Error {
     /// The word is not found
     #[error("transparent")]
-    WordNotFound,
+    WordNotFound(String),
 
     /// Something wrong with sqlite or your sql statements
     #[error("transparent")]

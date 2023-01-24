@@ -17,18 +17,27 @@ async fn main() -> Result<()> {
         Action::Lookup(w) => {
             if let Some(path) = w.local {
                 let stardict = StarDict::new(path.into())?;
-                if let Ok(trans) = stardict.lookup(&w.word) {
-                    println!("{}\n{}", w.word, trans);
-                    history::add_history(&w.word, &None)?;
-                } else {
-                    if w.local_first {
-                        let word = dict::lookup(&w.word).await?;
-                        println!("{}", word);
-                        if word.is_en() {
-                            history::add_history(word.word(), word.types())?;
+                match stardict.lookup(&w.word) {
+                    Ok(trans) => {
+                        println!("{}\n{}", w.word, trans);
+                        history::add_history(&w.word, &None)?;
+                    }
+                    Err(e) => {
+                        if w.local_first {
+                            let word = dict::lookup(&w.word).await.map_err(|_| {
+                                rmall::error::Error::WordNotFound(
+                                    "both offline and online".to_string(),
+                                )
+                            })?;
+
+                            println!("{}", word);
+
+                            if word.is_en() {
+                                history::add_history(word.word(), word.types())?;
+                            }
+                        } else {
+                            return Err(e);
                         }
-                    } else {
-                        return Err(rmall::error::Error::WordNotFound);
                     }
                 }
             } else {

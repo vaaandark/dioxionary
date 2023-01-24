@@ -139,7 +139,7 @@ pub async fn lookup(word: &str) -> Result<WordItem> {
     let trans = dirction(&html)?.trim().to_string();
     // cannot find the word
     if trans.is_empty() {
-        Err(Error::WordNotFound)
+        Err(Error::WordNotFound("online".to_string()))
     } else {
         let types = if is_en {
             Some(get_exam_type(&html)?)

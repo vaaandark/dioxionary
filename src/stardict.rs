@@ -35,7 +35,7 @@ impl<'a> StarDict {
             let (_, offset, size) = self.idx.items[pos];
             Ok(self.dict.get(offset, size))
         } else {
-            Err(Error::WordNotFound)
+            Err(Error::WordNotFound(self.ifo.bookname.to_string()))
         }
     }
 }
