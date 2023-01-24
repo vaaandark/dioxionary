@@ -78,10 +78,7 @@ pub fn list_history(type_: Option<String>, sort: bool, table: bool, column: usiz
     let mut stmt = conn.prepare(&stmt)?;
     let word_iter = stmt.query_map([], |row| row.get(0) as rusqlite::Result<String>)?;
 
-    let mut words: Vec<String> = word_iter
-        .filter(|x| x.is_ok())
-        .map(|x| x.unwrap())
-        .collect();
+    let mut words: Vec<String> = word_iter.filter_map(|x| x.ok()).collect();
 
     if sort {
         words.sort();

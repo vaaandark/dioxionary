@@ -1,11 +1,25 @@
-pub use clap::{Parser, Args};
+pub use clap::{Args, Parser};
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None, after_help =
 "Examples:
-  `rmall list` to list all
+  you can list all records:
+    rmall list
   you can also list the following types:
-    'CET4', 'CET6', 'CET8', 'TOEFL', 'IELTS', 'GMAT', 'GRE', 'SAT'"
+    'CET4', 'CET6', 'CET8', 'TOEFL', 'IELTS', 'GMAT', 'GRE', 'SAT'
+
+  When you need to use local dictionary, please rename the contents as following:
+    cdict-gb
+    ├── cdict-gb.dict
+    ├── cdict-gb.dict.dz
+    ├── cdict-gb.idx
+    └── cdict-gb.ifo
+  Their prefixes must be the same as the dirname.
+  Then you can look up like:
+    lookup --local <DICTDIR> <WORD>
+  or:
+    lookup -l <DICTDIR> <WORD>
+"
 )]
 pub struct Cli {
     #[command(subcommand)]
@@ -14,7 +28,7 @@ pub struct Cli {
 
 #[derive(clap::Subcommand, Debug)]
 pub enum Action {
-    /// lookup the following word
+    /// lookup the following word, default web dictionary
     Lookup(Lookup),
 
     /// list the specific types of records
@@ -26,6 +40,10 @@ pub enum Action {
 
 #[derive(Args, Debug)]
 pub struct Lookup {
+    /// use local dictionary
+    #[arg(short, long)]
+    pub local: Option<String>,
+
     pub word: String,
 }
 

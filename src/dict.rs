@@ -27,7 +27,7 @@ async fn get_html(word: &str) -> Result<Html> {
 
 fn zh2en(html: &Html) -> Result<String> {
     let mut res = String::new();
-    let trans = Selector::parse("ul.basic").map_err(|_| Error::ParsingError)?;
+    let trans = Selector::parse("ul.basic").map_err(|_| Error::HtmlParsingError)?;
     html.select(&trans).into_iter().for_each(|x| {
         x.text().collect::<Vec<_>>().iter().for_each(|x| {
             res.push_str(x);
@@ -39,7 +39,7 @@ fn zh2en(html: &Html) -> Result<String> {
 
 fn en2zh(html: &Html) -> Result<String> {
     let mut res = String::new();
-    let phonetic = Selector::parse(".per-phone").map_err(|_| Error::ParsingError)?;
+    let phonetic = Selector::parse(".per-phone").map_err(|_| Error::HtmlParsingError)?;
     html.select(&phonetic).into_iter().for_each(|x| {
         x.text().collect::<Vec<_>>().iter().for_each(|x| {
             res.push_str(x);
@@ -48,14 +48,14 @@ fn en2zh(html: &Html) -> Result<String> {
     });
     res.push_str("\n");
     let mut pos_text: Vec<&str> = Vec::new();
-    let pos = Selector::parse(".pos").map_err(|_| Error::ParsingError)?;
+    let pos = Selector::parse(".pos").map_err(|_| Error::HtmlParsingError)?;
     html.select(&pos).into_iter().for_each(|x| {
         x.text().collect::<Vec<_>>().iter().for_each(|x| {
             pos_text.push(*x);
         });
     });
     let mut trans_text: Vec<&str> = Vec::new();
-    let trans = Selector::parse(".trans").map_err(|_| Error::ParsingError)?;
+    let trans = Selector::parse(".trans").map_err(|_| Error::HtmlParsingError)?;
     html.select(&trans).into_iter().for_each(|x| {
         x.text().collect::<Vec<_>>().iter().for_each(|x| {
             trans_text.push(*x);
@@ -76,7 +76,7 @@ fn en2zh(html: &Html) -> Result<String> {
 }
 
 fn get_exam_type(html: &Html) -> Result<Vec<String>> {
-    let types = Selector::parse(".exam_type-value").map_err(|_| Error::ParsingError)?;
+    let types = Selector::parse(".exam_type-value").map_err(|_| Error::HtmlParsingError)?;
     let mut res: Vec<String> = Vec::new();
     html.select(&types).into_iter().for_each(|x| {
         x.text()

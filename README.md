@@ -4,11 +4,6 @@ Remember all words in terminal!
 
 在终端中查单词、背单词！
 
-## 已完成
-
-- [x] 查单词
-- [ ] 背单词
-
 ## 依赖
 
 - sqlite3
@@ -32,7 +27,29 @@ cargo build --releases
 ### 查询单词
 
 ```console
-$ rmall lookup <WORD>
+$ rmall lookup [OPTIONS] <WORD>
+```
+
+如果需要本地词典，则可以使用 `-l` 或 `--local` 选项指定词典文件目录：
+
+> 只支持 stardict 的词典格式
+
+> 可以在 http://download.huzheng.org/ 下载 stardict 格式词典
+
+```plain
+    cdict-gb
+    ├── cdict-gb.dict
+    ├── cdict-gb.dict.dz
+    ├── cdict-gb.idx
+    └── cdict-gb.ifo
+
+Their prefixes must be the same as the dirname.
+```
+
+在本地词典查询：
+
+```console
+$ lookup -l <DICTDIR> <WORD>
 ```
 
 ### 列出记录
