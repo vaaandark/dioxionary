@@ -17,7 +17,7 @@ async fn main() -> Result<()> {
         Action::Lookup(w) => {
             if let Some(path) = w.local {
                 let stardict = StarDict::new(path.into())?;
-                let trans = stardict.lookup(&w.word)?;
+                let trans = stardict.quick_lookup(&w.word)?;
                 println!("{}\n{}", w.word, trans);
             } else {
                 let word = dict::lookup(&w.word).await?;

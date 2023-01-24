@@ -24,16 +24,7 @@ impl<'a> StarDict {
         Ok(StarDict { ifo, idx, dict })
     }
 
-    pub fn lookup(&'a self, word: &str) -> Result<&'a str> {
-        // binary search in std
-        // if let Ok(pos) = self.idx.items.binary_search_by_key(&word, |x| &x.0) {
-        //     let (_, offset, size) = self.idx.items[pos];
-        //     self.dict.get(offset, size)
-        // } else {
-        //     panic!();
-        // }
-
-        // very very violent
+    pub fn quick_lookup(&'a self, word: &str) -> Result<&'a str> {
         let mut trans: &str = "";
         self.idx.items.iter().for_each(|x| {
             if x.0 == word {
@@ -47,6 +38,21 @@ impl<'a> StarDict {
         } else {
             Err(Error::WordNotFound)
         }
+    }
+
+    pub fn binary_lookup_unchecked(&'a self, word: &str) -> Result<&'a str> {
+        if let Ok(pos) = self.idx.items.binary_search_by_key(&word, |x| &x.0) {
+            let (_, offset, size) = self.idx.items[pos];
+            Ok(self.dict.get(offset, size))
+        } else {
+            Err(Error::WordNotFound)
+        }
+    }
+
+    pub fn binary_lookup(&'a self, word: &str) -> Result<&'a str> {
+        let mut items = self.idx.items.clone();
+        items.sort_by(|a, b| a.0.cmp(&b.0));
+        self.binary_lookup_unchecked(word)
     }
 }
 
@@ -184,7 +190,7 @@ struct Idx {
 
 #[allow(unused)]
 impl Idx {
-    fn read_bytes<const N: usize, T>(path: PathBuf) -> Result<Vec<(String, usize, usize)>>
+    fn read_bytes<'a, const N: usize, T>(path: PathBuf) -> Result<Vec<(String, usize, usize)>>
     where
         T: FromBytes<N> + TryInto<usize>,
         <T as TryInto<usize>>::Error: Debug,
