@@ -64,7 +64,16 @@ impl<'a> StarDict {
     }
 
     pub fn lookup(&'a self, word: &str) -> Result<(&'a str, &'a str)> {
-        if let Ok(pos) = self.fuzzy_search_for_best_match(word) {
+        if let Ok(pos) = self.idx.items.binary_search_by(|probe| {
+            probe
+                .0
+                .to_lowercase()
+                .cmp(&word.to_lowercase())
+                .then(probe.0.as_str().cmp(&word))
+        }) {
+            let (ref word, offset, size) = self.idx.items[pos];
+            Ok((word, self.dict.get(offset, size)))
+        } else if let Ok(pos) = self.fuzzy_search_for_best_match(word) {
             let (ref word, offset, size) = self.idx.items[pos];
             Ok((word, self.dict.get(offset, size)))
         } else {
