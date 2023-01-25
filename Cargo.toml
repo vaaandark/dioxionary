@@ -1,6 +1,6 @@
 [package]
 name = "rmall"
-version = "0.0.4"
+version = "0.0.5"
 edition = "2021"
 authors = ["vaaandark <vaaandark@gmail.com>"]
 description = "Remember all words in terminal!"
