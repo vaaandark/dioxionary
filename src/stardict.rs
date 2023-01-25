@@ -56,8 +56,9 @@ impl<'a> StarDict {
                 }
                 (dist[text_chars.len()][pattern_chars.len()], pos)
             })
+            .filter(|x| x.0 <= pattern_chars.len() / 2)
             .min_by_key(|x| x.0)
-            .ok_or(Error::WordNotFound("Empty Dictionary".to_string()))?
+            .ok_or(Error::WordNotFound(self.ifo.bookname.to_string()))?
             .1;
         Ok(idx)
     }
