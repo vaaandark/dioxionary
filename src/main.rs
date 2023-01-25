@@ -18,8 +18,11 @@ async fn main() -> Result<()> {
             if let Some(path) = w.local {
                 let stardict = StarDict::new(path.into())?;
                 match stardict.lookup(&w.word) {
-                    Ok(trans) => {
-                        println!("{}\n{}", w.word, trans);
+                    Ok((word, trans)) => {
+                        if word != w.word {
+                            println!("fuzzy search enabled, {} => {}", &w.word, word);
+                        }
+                        println!("{}\n{}", word, trans);
                         history::add_history(&w.word, &None)?;
                     }
                     Err(e) => {

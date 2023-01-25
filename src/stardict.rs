@@ -1,6 +1,7 @@
 use crate::error::{Error, Result};
 use eio::FromBytes;
 use flate2::read::GzDecoder;
+use std::cmp::min;
 use std::fmt::Debug;
 use std::fs::{read, File};
 use std::io::{prelude::*, BufReader};
@@ -24,16 +25,47 @@ impl<'a> StarDict {
         Ok(StarDict { ifo, idx, dict })
     }
 
-    pub fn lookup(&'a self, word: &str) -> Result<&'a str> {
-        if let Ok(pos) = self.idx.items.binary_search_by(|probe| {
-            probe
-                .0
-                .to_lowercase()
-                .cmp(&word.to_lowercase())
-                .then(probe.0.as_str().cmp(&word))
-        }) {
-            let (_, offset, size) = self.idx.items[pos];
-            Ok(self.dict.get(offset, size))
+    fn fuzzy_search_for_best_match(&self, word: &str) -> Result<usize> {
+        let pattern_chars: Vec<_> = word.to_lowercase().chars().collect();
+        let idx = self
+            .idx
+            .items
+            .iter()
+            .enumerate()
+            .filter(|(_, x)| !x.0.is_empty())
+            .map(|(pos, x)| {
+                let text_chars: Vec<_> = x.0.to_lowercase().chars().collect();
+                let mut dist = vec![vec![0; pattern_chars.len() + 1]; text_chars.len() + 1];
+
+                for i in 0..=text_chars.len() {
+                    dist[i][0] = i;
+                }
+
+                for j in 0..=pattern_chars.len() {
+                    dist[0][j] = j;
+                }
+
+                for i in 1..=text_chars.len() {
+                    for j in 1..=pattern_chars.len() {
+                        dist[i][j] = if text_chars[i - 1] == pattern_chars[j - 1] {
+                            dist[i - 1][j - 1]
+                        } else {
+                            min(min(dist[i][j - 1], dist[i - 1][j]), dist[i - 1][j - 1]) + 1
+                        }
+                    }
+                }
+                (dist[text_chars.len()][pattern_chars.len()], pos)
+            })
+            .min_by_key(|x| x.0)
+            .ok_or(Error::WordNotFound("Empty Dictionary".to_string()))?
+            .1;
+        Ok(idx)
+    }
+
+    pub fn lookup(&'a self, word: &str) -> Result<(&'a str, &'a str)> {
+        if let Ok(pos) = self.fuzzy_search_for_best_match(word) {
+            let (ref word, offset, size) = self.idx.items[pos];
+            Ok((word, self.dict.get(offset, size)))
         } else {
             Err(Error::WordNotFound(self.ifo.bookname.to_string()))
         }
