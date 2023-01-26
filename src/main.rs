@@ -3,6 +3,7 @@ use rmall::{
     dict,
     error::Result,
     history,
+    stardict::lookup,
     stardict::StarDict,
 };
 use tokio;
@@ -18,10 +19,19 @@ async fn main() -> Result<()> {
             if let Some(path) = w.local {
                 let stardict = StarDict::new(path.into())?;
                 match stardict.lookup(&w.word) {
-                    Ok(trans) => {
-                        println!("{}\n{}", w.word, trans);
-                        history::add_history(&w.word, &None)?;
-                    }
+                    Ok(found) => match found {
+                        lookup::Found::Exact(entry) => {
+                            println!("{}\n{}", entry.word, entry.trans);
+                            history::add_history(&w.word, &None)?;
+                        }
+                        lookup::Found::Fuzzy(entries) => {
+                            println!("Fuzzy search enabled");
+                            for entry in entries {
+                                println!("==============================");
+                                println!(">>>>> {} <<<<<\n{}", entry.word, entry.trans);
+                            }
+                        }
+                    },
                     Err(e) => {
                         if w.local_first {
                             let word = dict::lookup(&w.word).await.map_err(|_| {

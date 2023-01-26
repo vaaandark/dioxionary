@@ -1,6 +1,7 @@
 use crate::error::{Error, Result};
 use eio::FromBytes;
 use flate2::read::GzDecoder;
+use std::cmp::min;
 use std::fmt::Debug;
 use std::fs::{read, File};
 use std::io::{prelude::*, BufReader};
@@ -11,6 +12,18 @@ pub struct StarDict {
     ifo: Ifo,
     idx: Idx,
     dict: Dict,
+}
+
+pub mod lookup {
+    pub struct Entry<'a> {
+        pub word: &'a str,
+        pub trans: &'a str,
+    }
+
+    pub enum Found<'a> {
+        Exact(Entry<'a>),
+        Fuzzy(Vec<Entry<'a>>),
+    }
 }
 
 #[allow(unused)]
@@ -24,7 +37,7 @@ impl<'a> StarDict {
         Ok(StarDict { ifo, idx, dict })
     }
 
-    pub fn lookup(&'a self, word: &str) -> Result<&'a str> {
+    fn exact_lookup(&self, word: &str) -> Option<lookup::Entry> {
         if let Ok(pos) = self.idx.items.binary_search_by(|probe| {
             probe
                 .0
@@ -32,8 +45,73 @@ impl<'a> StarDict {
                 .cmp(&word.to_lowercase())
                 .then(probe.0.as_str().cmp(&word))
         }) {
-            let (_, offset, size) = self.idx.items[pos];
-            Ok(self.dict.get(offset, size))
+            let (word, offset, size) = &self.idx.items[pos];
+            let trans = self.dict.get(*offset, *size);
+            Some(lookup::Entry { word, trans })
+        } else {
+            None
+        }
+    }
+
+    fn min_edit_distance(pattern: &str, text: &str) -> usize {
+        let pattern_chars: Vec<_> = pattern.chars().collect();
+        let text_chars: Vec<_> = text.chars().collect();
+        let mut dist = vec![vec![0; pattern_chars.len() + 1]; text_chars.len() + 1];
+        for i in 0..=text_chars.len() {
+            dist[i][0] = i;
+        }
+
+        for j in 0..=pattern_chars.len() {
+            dist[0][j] = j;
+        }
+
+        for i in 1..=text_chars.len() {
+            for j in 1..=pattern_chars.len() {
+                dist[i][j] = if text_chars[i - 1] == pattern_chars[j - 1] {
+                    dist[i - 1][j - 1]
+                } else {
+                    min(min(dist[i][j - 1], dist[i - 1][j]), dist[i - 1][j - 1]) + 1
+                }
+            }
+        }
+        dist[text_chars.len()][pattern_chars.len()]
+    }
+
+    fn fuzzy_lookup(&self, word: &str) -> Option<Vec<lookup::Entry>> {
+        self.idx
+            .items
+            .iter()
+            .filter(|s| !s.0.is_empty())
+            .map(|s| Self::min_edit_distance(&word.to_lowercase(), &s.0.to_lowercase()))
+            .filter(|&dist| dist <= word.len() / 2)
+            .min()
+            .and_then(|min_dist| {
+                Some(
+                    self.idx
+                        .items
+                        .iter()
+                        .filter(|&s| {
+                            min_dist
+                                == Self::min_edit_distance(
+                                    &word.to_lowercase(),
+                                    &s.0.to_lowercase(),
+                                )
+                        })
+                        .map(|x| {
+                            let (word, offset, size) = x;
+                            let trans = self.dict.get(*offset, *size);
+                            lookup::Entry { word, trans }
+                        })
+                        .collect::<Vec<_>>(),
+                )
+            })
+    }
+
+    pub fn lookup(&'a self, word: &str) -> Result<lookup::Found> {
+        if let Some(entry) = self.exact_lookup(word) {
+            Ok(lookup::Found::Exact(entry))
+        } else if let Some(entries) = self.fuzzy_lookup(word) {
+            Ok(lookup::Found::Fuzzy(entries))
         } else {
             Err(Error::WordNotFound(self.ifo.bookname.to_string()))
         }
