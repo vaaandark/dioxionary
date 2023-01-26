@@ -44,9 +44,13 @@ pub struct Lookup {
     #[arg(short, long, group = "use_local")]
     pub local: Option<String>,
 
-    /// try local dictionary first, then the net
+    /// try offline dictionary first, then the online
     #[arg(short = 'L', long, requires = "use_local")]
     pub local_first: bool,
+
+    /// disable fuzzy search, only use exact search, conflict with `-L`
+    #[arg(short, long, requires = "use_local")]
+    pub exact: bool,
 
     pub word: String,
 }

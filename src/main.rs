@@ -1,8 +1,7 @@
 use rmall::{
     cli::{Action, Cli, Parser},
-    dict,
-    error::Result,
-    history,
+    error::{Error, Result},
+    history, lookup_online,
     stardict::lookup,
     stardict::StarDict,
 };
@@ -17,45 +16,46 @@ async fn main() -> Result<()> {
         Action::List(t) => history::list_history(t.type_, t.sort, t.table, t.column),
         Action::Lookup(w) => {
             if let Some(path) = w.local {
+                // use offline dictionary
                 let stardict = StarDict::new(path.into())?;
-                match stardict.lookup(&w.word) {
-                    Ok(found) => match found {
-                        lookup::Found::Exact(entry) => {
-                            println!("{}\n{}", entry.word, entry.trans);
-                            history::add_history(&w.word, &None)?;
-                        }
-                        lookup::Found::Fuzzy(entries) => {
-                            println!("Fuzzy search enabled");
-                            for entry in entries {
-                                println!("==============================");
-                                println!(">>>>> {} <<<<<\n{}", entry.word, entry.trans);
-                            }
-                        }
-                    },
-                    Err(e) => {
-                        if w.local_first {
-                            let word = dict::lookup(&w.word).await.map_err(|_| {
-                                rmall::error::Error::WordNotFound(
-                                    "both offline and online".to_string(),
-                                )
-                            })?;
 
-                            println!("{}", word);
-
-                            if word.is_en() {
-                                history::add_history(word.word(), word.types())?;
+                if w.exact {
+                    // assuming no typos, look up for exact results
+                    let entry = stardict
+                        .exact_lookup(&w.word)
+                        .ok_or(Error::WordNotFound(stardict.dict_name().to_string()))?;
+                    println!("{}\n{}", entry.word, entry.trans);
+                    history::add_history(&w.word, &None)?;
+                } else {
+                    // enable fuzzy search
+                    match stardict.lookup(&w.word) {
+                        Ok(found) => match found {
+                            lookup::Found::Exact(entry) => {
+                                println!("{}\n{}", entry.word, entry.trans);
+                                history::add_history(&w.word, &None)?;
                             }
-                        } else {
-                            return Err(e);
+                            lookup::Found::Fuzzy(entries) => {
+                                println!("Fuzzy search enabled");
+                                entries.into_iter().for_each(|e| {
+                                    println!(
+                                        "==============================\n>>>>> {} <<<<<\n{}",
+                                        e.word, e.trans
+                                    );
+                                })
+                            }
+                        },
+                        Err(e) => {
+                            if w.local_first {
+                                lookup_online(&w.word).await?;
+                            } else {
+                                return Err(e);
+                            }
                         }
                     }
                 }
             } else {
-                let word = dict::lookup(&w.word).await?;
-                println!("{}", word);
-                if word.is_en() {
-                    history::add_history(word.word(), word.types())?;
-                }
+                // only use online dictionary
+                lookup_online(&w.word).await?;
             }
             Ok(())
         }

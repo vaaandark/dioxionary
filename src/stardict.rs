@@ -37,7 +37,7 @@ impl<'a> StarDict {
         Ok(StarDict { ifo, idx, dict })
     }
 
-    fn exact_lookup(&self, word: &str) -> Option<lookup::Entry> {
+    pub fn exact_lookup(&self, word: &str) -> Option<lookup::Entry> {
         if let Ok(pos) = self.idx.items.binary_search_by(|probe| {
             probe
                 .0
@@ -77,7 +77,7 @@ impl<'a> StarDict {
         dist[text_chars.len()][pattern_chars.len()]
     }
 
-    fn fuzzy_lookup(&self, word: &str) -> Option<Vec<lookup::Entry>> {
+    pub fn fuzzy_lookup(&self, word: &str) -> Option<Vec<lookup::Entry>> {
         self.idx
             .items
             .iter()
@@ -113,8 +113,12 @@ impl<'a> StarDict {
         } else if let Some(entries) = self.fuzzy_lookup(word) {
             Ok(lookup::Found::Fuzzy(entries))
         } else {
-            Err(Error::WordNotFound(self.ifo.bookname.to_string()))
+            Err(Error::WordNotFound(self.dict_name().to_string()))
         }
+    }
+
+    pub fn dict_name(&'a self) -> &'a str {
+        &self.ifo.bookname
     }
 }
 
