@@ -30,6 +30,8 @@ cargo install --git https://github.com/vaaandark/rmall
 $ rmall lookup [OPTIONS] <WORD>
 ```
 
+支持模糊搜索(fuzzy search)，在词典中没有找到单词时会输出最相似的一个或多个单词的释义。
+
 如果需要本地词典，则可以使用 `-l` 或 `--local` 选项指定词典文件目录：
 
 > 只支持 stardict 的词典格式
