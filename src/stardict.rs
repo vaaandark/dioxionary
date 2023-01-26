@@ -78,33 +78,32 @@ impl<'a> StarDict {
     }
 
     pub fn fuzzy_lookup(&self, word: &str) -> Option<Vec<lookup::Entry>> {
-        self.idx
+        let distances: Vec<_> = self
+            .idx
             .items
             .iter()
             .filter(|s| !s.0.is_empty())
             .map(|s| Self::min_edit_distance(&word.to_lowercase(), &s.0.to_lowercase()))
-            .filter(|&dist| dist <= word.len() / 2)
-            .min()
-            .and_then(|min_dist| {
-                Some(
-                    self.idx
-                        .items
-                        .iter()
-                        .filter(|&s| {
-                            min_dist
-                                == Self::min_edit_distance(
-                                    &word.to_lowercase(),
-                                    &s.0.to_lowercase(),
-                                )
-                        })
-                        .map(|x| {
-                            let (word, offset, size) = x;
-                            let trans = self.dict.get(*offset, *size);
-                            lookup::Entry { word, trans }
-                        })
-                        .collect::<Vec<_>>(),
-                )
+            .collect();
+        let min_dist = if let Some(dist) = distances.iter().min() {
+            dist
+        } else {
+            return None;
+        };
+        let result = self
+            .idx
+            .items
+            .iter()
+            .filter(|s| !s.0.is_empty())
+            .enumerate()
+            .filter(|(idx, _)| distances[*idx] == *min_dist)
+            .map(|(_, x)| {
+                let (word, offset, size) = x;
+                let trans = self.dict.get(*offset, *size);
+                lookup::Entry { word, trans }
             })
+            .collect::<Vec<_>>();
+        Some(result)
     }
 
     pub fn lookup(&'a self, word: &str) -> Result<lookup::Found> {
