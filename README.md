@@ -1,8 +1,8 @@
 # rmall
 
-Remember all words in terminal!
+Remember all words in terminal **offline** / **online**!
 
-在终端中查单词、背单词！
+使用 **离线** / **在线** 词典在终端中查单词、背单词！
 
 ## 依赖
 
@@ -74,3 +74,21 @@ CET4 | CET6 | CET8 | TOEFL | IELTS | GMAT | GRE | SAT
 ```console
 $ rmall count
 ```
+
+### 多字典支持
+
+暂时没有在程序中集成多字典，但是可以通过 Shell 脚本实现类似的效果：
+
+```console
+$ trans terraria
+Error: WordNotFound("朗道英汉字典5.0")
+Error: WordNotFound("牛津现代英汉双解词典")
+Error: WordNotFound("CDICT5英汉辞典")
+Error: WordNotFound("计算机词汇")
+terraria
+英 / tɛˈrɛːrɪə / 美 / tɛˈrɛːrɪə /
+ 泰拉瑞亚（游戏名）
+  Xbox Live ArcadeMarch 27, 2013PlayStation VitaLate Fall 2013iOSAugust 29, 2013http://www.terrariaonline.
+```
+
+脚本在 `scripts/` 目录。
