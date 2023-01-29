@@ -2,6 +2,10 @@ use thiserror::Error;
 
 #[derive(Debug, Error)]
 pub enum Error {
+    /// wrong arguments
+    #[error("transparent")]
+    ArgumentsError,
+
     /// The word is not found
     #[error("transparent")]
     WordNotFound(String),
@@ -57,7 +61,6 @@ pub enum Error {
     /// something wrong with your idx file
     #[error("transparent")]
     IdxFileParsingError,
-
 }
 
 pub type Result<T> = std::result::Result<T, Error>;

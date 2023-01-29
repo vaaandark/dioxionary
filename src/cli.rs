@@ -3,6 +3,7 @@ pub use clap::{Args, Parser};
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None, after_help =
 "Examples:
+  When no subcommand is specified, the default is 'lookup'.
   you can list all records:
     rmall list
   you can also list the following types:
@@ -23,7 +24,21 @@ pub use clap::{Args, Parser};
 )]
 pub struct Cli {
     #[command(subcommand)]
-    pub action: Action,
+    pub action: Option<Action>,
+
+    /// use local dictionary
+    #[arg(short, long)]
+    pub local: Option<String>,
+
+    /// try offline dictionary first, then the online
+    #[arg(short = 'L', long, requires("local"))]
+    pub local_first: bool,
+
+    /// disable fuzzy search, only use exact search, conflict with `-L`
+    #[arg(short, long, requires("local"))]
+    pub exact: bool,
+
+    pub word: Option<String>,
 }
 
 #[derive(clap::Subcommand, Debug)]
@@ -41,15 +56,15 @@ pub enum Action {
 #[derive(Args, Debug)]
 pub struct Lookup {
     /// use local dictionary
-    #[arg(short, long, group = "use_local")]
+    #[arg(short, long)]
     pub local: Option<String>,
 
     /// try offline dictionary first, then the online
-    #[arg(short = 'L', long, requires = "use_local")]
+    #[arg(short = 'L', long, requires("local"))]
     pub local_first: bool,
 
     /// disable fuzzy search, only use exact search, conflict with `-L`
-    #[arg(short, long, requires = "use_local")]
+    #[arg(short, long, requires("local"))]
     pub exact: bool,
 
     pub word: String,
@@ -62,11 +77,11 @@ pub struct List {
     pub sort: bool,
 
     /// output to a table
-    #[arg(short, long, default_value_t = false, group = "output_format")]
+    #[arg(short, long, default_value_t = false)]
     pub table: bool,
 
     /// the number of columns in the table
-    #[arg(short, long, default_value_t = 5, requires = "output_format")]
+    #[arg(short, long, default_value_t = 5, requires("table"))]
     pub column: usize,
 
     pub type_: Option<String>,
