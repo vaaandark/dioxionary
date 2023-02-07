@@ -8,18 +8,8 @@ pub use clap::{Args, Parser};
     rmall list
   you can also list the following types:
     'CET4', 'CET6', 'CET8', 'TOEFL', 'IELTS', 'GMAT', 'GRE', 'SAT'
-
-  When you need to use local dictionary, please rename the contents as following:
-    cdict-gb
-    ├── cdict-gb.dict
-    ├── cdict-gb.dict.dz
-    ├── cdict-gb.idx
-    └── cdict-gb.ifo
-  Their prefixes must be the same as the dirname.
-  Then you can look up like:
-    lookup --local <DICTDIR> <WORD>
-  or:
-    lookup -l <DICTDIR> <WORD>
+  you can count all records:
+    rmall count
 "
 )]
 pub struct Cli {
