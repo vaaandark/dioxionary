@@ -24,6 +24,8 @@ cargo install --git https://github.com/vaaandark/rmall
 
 ![demo](images/demo.svg)
 
+> asciinema 录制配合 svg-term 转换后字符略有错位现象
+
 ### 查询单词
 
 ```console
