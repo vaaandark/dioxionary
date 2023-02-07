@@ -22,3 +22,4 @@ prettytable = "0.10.0"
 thiserror = "1.0.38"
 eio = "0.1.2"
 flate2 = { version = "1.0.25", features = ["zlib"] }
+rustyline = "10.1.1"

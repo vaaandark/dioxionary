@@ -7,9 +7,10 @@ use std::path::PathBuf;
 
 use dirs::config_dir;
 use error::{Error, Result};
+use rustyline::{error::ReadlineError, Editor};
 use stardict::{lookup, StarDict};
 
-pub async fn lookup_online(word: &str) -> Result<()> {
+async fn lookup_online(word: &str) -> Result<()> {
     let word = dict::lookup(word).await?;
     println!("{}", word);
     if word.is_en() {
@@ -18,7 +19,7 @@ pub async fn lookup_online(word: &str) -> Result<()> {
     Ok(())
 }
 
-pub fn lookup_offline(path: PathBuf, exact: bool, word: &str) -> Result<()> {
+fn lookup_offline(path: PathBuf, exact: bool, word: &str) -> Result<()> {
     let stardict = StarDict::new(path)?;
 
     if exact {
@@ -55,7 +56,13 @@ pub fn lookup_offline(path: PathBuf, exact: bool, word: &str) -> Result<()> {
     Ok(())
 }
 
-pub async fn query(online: bool, local_first: bool, exact: bool, word: String, path: Option<String>) -> Result<()> {
+pub async fn query(
+    online: bool,
+    local_first: bool,
+    exact: bool,
+    word: String,
+    path: &Option<String>,
+) -> Result<()> {
     if online {
         // only use online dictionary
         return lookup_online(&word).await;
@@ -96,5 +103,27 @@ pub async fn query(online: bool, local_first: bool, exact: bool, word: String, p
         }
     } else {
         Err(all_fail)
+    }
+}
+
+pub async fn repl(
+    online: bool,
+    local_first: bool,
+    exact: bool,
+    path: &Option<String>,
+) -> Result<()> {
+    let mut rl = Editor::<()>::new().map_err(|_| Error::ReadlineError)?;
+    loop {
+        let readline = rl.readline(">> ");
+        match readline {
+            Ok(word) => {
+                if let Err(e) = query(online, local_first, exact, word, path).await {
+                    println!("{:?}", e);
+                }
+            }
+            Err(ReadlineError::Interrupted) => break Ok(()),
+            Err(ReadlineError::Eof) => break Ok(()),
+            _ => break Err(Error::ReadlineError),
+        }
     }
 }

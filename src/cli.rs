@@ -30,14 +30,14 @@ pub struct Cli {
 
     /// disable fuzzy search, only use exact search, conflict with `-x`
     #[arg(short, long)]
-    pub exact: bool,
+    pub exact_search: bool,
 
     pub word: Option<String>,
 }
 
 #[derive(clap::Subcommand, Debug)]
 pub enum Action {
-    /// lookup the following word, default web dictionary
+    /// lookup the following word, default offline dictionary
     Lookup(Lookup),
 
     /// list the specific types of records
@@ -63,9 +63,9 @@ pub struct Lookup {
 
     /// disable fuzzy search, only use exact search, conflict with `-x`
     #[arg(short, long)]
-    pub exact: bool,
+    pub exact_search: bool,
 
-    pub word: String,
+    pub word: Option<String>,
 }
 
 #[derive(Args, Debug)]

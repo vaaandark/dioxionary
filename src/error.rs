@@ -4,7 +4,7 @@ use thiserror::Error;
 pub enum Error {
     /// wrong arguments
     #[error("transparent")]
-    ArgumentsError,
+    ReadlineError,
 
     /// The word is not found
     #[error("transparent")]

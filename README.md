@@ -29,16 +29,18 @@ cargo install --git https://github.com/vaaandark/rmall
 ### 查询单词
 
 ```console
-$ rmall lookup [OPTIONS] <WORD>
+$ rmall lookup [OPTIONS] [WORD]
 ```
 
 子命令 `lookup` 可以省略：
 
 ```console
-$ rmall [OPTIONS] <WORD>
+$ rmall [OPTIONS] [WORD]
 ```
 
-支持模糊搜索(fuzzy search)，在词典中没有找到单词时会输出最相似的一个或多个单词的释义。
+当参数中没有待查单词时，将进入交互模式，可以无限查询，直至按下 `Ctrl+D` 。
+
+支持模糊搜索(fuzzy search)，在词典中没有找到单词时会输出最相似的一个或多个单词的释义。使用 `-e` 或者 `--exact-search` 可以关闭模糊搜索。
 
 默认使用本地词典，本地词典目录应当存放在：
 
@@ -73,7 +75,9 @@ $ rmall [OPTIONS] <WORD>
 $ rmall -x <DICTDIR> <WORD>
 ```
 
-使用 `-l` 选项则会在本地查询失败后使用网络词典。推荐在 shell 配置文件中加入 `alias rl='rmall -l'`。
+可以使用 `-l` 或 `--local` 选项指定词典文件路径。
+
+使用 `-L` 或 `--local-first` 选项则会在本地查询失败后使用网络词典。推荐在 shell 配置文件中加入 `alias rl='rmall -l'`。
 
 ### 多字典支持
 
