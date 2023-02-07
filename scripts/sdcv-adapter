@@ -5,18 +5,6 @@ use warnings;
 use open qw(:std :utf8);
 
 use Getopt::Long;
-use Term::ReadLine;
-
-my %opt = map {
-    s/_/-/gr => undef
-} qw/
-help version
-list_dicts use_dict
-exact_search
-
-non_interactive only_data_dir data_dir
-json utf8_output utf8_input color
-/;
 
 sub help {
     print <<'eof';
@@ -51,50 +39,16 @@ sub list_dicts {
     exit
 }
 
-sub fuzzy_search {
-    if (defined $opt{use_dict}) {
-        system qw/rmall -L -l/, $opt{use_dict}, '--', $_ for (@_);
-    } else {
-        system qw/rmall -L --/, $_ for (@_);
-    }
-}
+my %opt = map {
+    s/_/-/gr => undef
+} qw/
+help version
+list_dicts use_dict
+exact_search
 
-sub full_text_search {
-    if (defined $opt{use_dict}) {
-        system qw/rmall -L -e -l/, $opt{use_dict}, '--', $_ for (@_);
-    } else {
-        system qw/rmall -L -e --/, $_ for (@_);
-    }
-}
-
-sub regexp_search {
-    die "not implemented in rmall"
-}
-
-sub search {
-    for (@_) {
-        if (/^[\/]/) {
-            fuzzy_search substr $_, 1
-        } elsif (/^[|]/) {
-            full_text_search substr $_, 1
-        } elsif (/[?*]/) {
-            regexp_search $_
-        } else {
-            fuzzy_search $_
-        }
-    }
-}
-
-sub repl {
-    my $term = Term::ReadLine->new('sdcv');
-    my $prompt = 'Enter word or phrase:';
-    my $out = $term->OUT || \*STDOUT;
-    while (defined ($_ = $term->readline($prompt)) ) {
-        chomp;
-        search $_;
-        $term->addhistory($_) if /\S/;
-    }
-}
+non_interactive only_data_dir data_dir
+json utf8_output utf8_input color
+/;
 
 GetOptions(
     'h|help' => \$opt{help},
@@ -116,13 +70,11 @@ help if defined $opt{help};
 version if defined $opt{version};
 list_dicts if defined $opt{list_dicts};
 
-unless (scalar @ARGV) {
-    exit if defined $opt{non_interactive};
-    repl
-}
+my @rmall_opt = ();
 
-if (defined $opt{exact_search}) {
-    full_text_search @ARGV
-} else {
-    search @ARGV
-}
+push @rmall_opt, '-L';
+push @rmall_opt, '-l', $opt{use_dict} if defined $opt{use_dict};
+push @rmall_opt, '-n' if defined $opt{non_interactive};
+push @rmall_opt, '-e' if defined $opt{exact_search};
+
+system 'rmall', @rmall_opt, '--', @ARGV
