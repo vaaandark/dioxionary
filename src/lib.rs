@@ -55,10 +55,14 @@ pub fn lookup_offline(path: PathBuf, exact: bool, word: &str) -> Result<()> {
     Ok(())
 }
 
-pub async fn query(online: bool, local_first: bool, exact: bool, word: String) -> Result<()> {
+pub async fn query(online: bool, local_first: bool, exact: bool, word: String, path: Option<String>) -> Result<()> {
     if online {
         // only use online dictionary
         return lookup_online(&word).await;
+    }
+
+    if let Some(path) = path {
+        return lookup_offline(path.into(), exact, &word);
     }
 
     let mut path = config_dir().ok_or(Error::ConfigDirNotFound)?;
