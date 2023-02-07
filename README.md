@@ -7,6 +7,7 @@ Remember all words in terminal **offline** / **online**!
 ## 依赖
 
 - sqlite3
+- openssl
 
 ## 安装
 
