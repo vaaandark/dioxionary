@@ -52,16 +52,16 @@ sub list_dicts {
 }
 
 sub fuzzy_search {
-    if (defined $cfg{use_dict}) {
-        system qw/rmall -L -l/, $cfg{use_dict}, '--', $_ for (@_);
+    if (defined $opt{use_dict}) {
+        system qw/rmall -L -l/, $opt{use_dict}, '--', $_ for (@_);
     } else {
         system qw/rmall -L --/, $_ for (@_);
     }
 }
 
 sub full_text_search {
-    if (defined $cfg{use_dict}) {
-        system qw/rmall -L -e -l/, $cfg{use_dict}, '--', $_ for (@_);
+    if (defined $opt{use_dict}) {
+        system qw/rmall -L -e -l/, $opt{use_dict}, '--', $_ for (@_);
     } else {
         system qw/rmall -L -e --/, $_ for (@_);
     }
