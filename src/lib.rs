@@ -63,13 +63,26 @@ pub async fn query(
     word: String,
     path: &Option<String>,
 ) -> Result<()> {
+    let mut word = word.as_str();
+    let exact = match word.chars().nth(0) {
+        Some('|') => {
+            word = &word[1..];
+            true
+        }
+        Some('/') => {
+            word = &word[1..];
+            false
+        }
+        _ => exact,
+    };
+
     if online {
         // only use online dictionary
         return lookup_online(&word).await;
     }
 
     if let Some(path) = path {
-        return lookup_offline(path.into(), exact, &word);
+        return lookup_offline(path.into(), exact, word);
     }
 
     let mut path = config_dir().ok_or(Error::ConfigDirNotFound)?;
@@ -86,7 +99,7 @@ pub async fn query(
 
     for d in dicts {
         // use offline dictionary
-        if let Err(e) = lookup_offline(d.path(), exact, &word) {
+        if let Err(e) = lookup_offline(d.path(), exact, word) {
             println!("{:?}", e);
         } else {
             return Ok(());
