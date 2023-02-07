@@ -32,6 +32,10 @@ pub struct Cli {
     #[arg(short, long)]
     pub exact_search: bool,
 
+    /// for use in scripts
+    #[arg(short, long)]
+    pub non_interactive: bool,
+
     pub word: Option<String>,
 }
 
@@ -64,6 +68,10 @@ pub struct Lookup {
     /// disable fuzzy search, only use exact search, conflict with `-x`
     #[arg(short, long)]
     pub exact_search: bool,
+
+    /// for use in scripts
+    #[arg(short, long)]
+    pub non_interactive: bool,
 
     pub word: Option<String>,
 }
