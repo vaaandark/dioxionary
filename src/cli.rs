@@ -26,16 +26,16 @@ pub struct Cli {
     #[command(subcommand)]
     pub action: Option<Action>,
 
-    /// use local dictionary
-    #[arg(short, long)]
-    pub local: Option<String>,
+    /// use online dictionary
+    #[arg(short = 'x', long)]
+    pub online: bool,
 
     /// try offline dictionary first, then the online
-    #[arg(short = 'L', long, requires("local"))]
+    #[arg(short, long)]
     pub local_first: bool,
 
-    /// disable fuzzy search, only use exact search, conflict with `-L`
-    #[arg(short, long, requires("local"))]
+    /// disable fuzzy search, only use exact search, conflict with `-x`
+    #[arg(short, long)]
     pub exact: bool,
 
     pub word: Option<String>,
@@ -55,16 +55,16 @@ pub enum Action {
 
 #[derive(Args, Debug)]
 pub struct Lookup {
-    /// use local dictionary
-    #[arg(short, long)]
-    pub local: Option<String>,
+    /// use online dictionary
+    #[arg(short = 'x', long)]
+    pub online: bool,
 
     /// try offline dictionary first, then the online
-    #[arg(short = 'L', long, requires("local"))]
+    #[arg(short, long)]
     pub local_first: bool,
 
-    /// disable fuzzy search, only use exact search, conflict with `-L`
-    #[arg(short, long, requires("local"))]
+    /// disable fuzzy search, only use exact search, conflict with `-x`
+    #[arg(short, long)]
     pub exact: bool,
 
     pub word: String,

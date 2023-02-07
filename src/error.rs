@@ -14,9 +14,13 @@ pub enum Error {
     #[error("transparent")]
     Sqlite(#[from] rusqlite::Error),
 
-    /// Something wrong with cache directory
+    /// Cache directory is not found
     #[error("transparent")]
     CacheDirNotFound,
+
+    /// Config directory is not found
+    #[error("transparent")]
+    ConfigDirNotFound,
 
     /// Something wrong with creating directory
     #[error("transparent")]
@@ -52,7 +56,7 @@ pub enum Error {
 
     /// something wrong with your dict file directory
     #[error("transparent")]
-    DictFileDirError,
+    StarDictDirError(String),
 
     /// something wrong with your dict file
     #[error("transparent")]

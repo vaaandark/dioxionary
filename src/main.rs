@@ -13,11 +13,11 @@ async fn main() -> Result<()> {
         match action {
             Action::Count => history::count_history(),
             Action::List(t) => history::list_history(t.type_, t.sort, t.table, t.column),
-            Action::Lookup(w) => query(w.local, w.local_first, w.exact, w.word).await,
+            Action::Lookup(w) => query(w.online, w.local_first, w.exact, w.word).await,
         }
     } else {
         if let Some(word) = cli.word {
-            query(cli.local, cli.local_first, cli.exact, word).await
+            query(cli.online, cli.local_first, cli.exact, word).await
         } else {
             Err(Error::ArgumentsError)
         }

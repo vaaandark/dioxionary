@@ -45,9 +45,10 @@ impl<'a> StarDict {
             }
         }
 
-        let ifo = ifo.ok_or(Error::DictFileDirError)?;
-        let idx = idx.ok_or(Error::DictFileDirError)?;
-        let dict = dict.ok_or(Error::DictFileDirError)?;
+        let path = path.to_str().unwrap();
+        let ifo = ifo.ok_or(Error::StarDictDirError(path.into()))?;
+        let idx = idx.ok_or(Error::StarDictDirError(path.into()))?;
+        let dict = dict.ok_or(Error::StarDictDirError(path.into()))?;
 
         let ifo = Ifo::new(ifo)?;
         let idx = Idx::new(idx, ifo.version())?;

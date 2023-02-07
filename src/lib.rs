@@ -3,6 +3,9 @@ pub mod dict;
 pub mod error;
 pub mod history;
 pub mod stardict;
+use std::path::PathBuf;
+
+use dirs::config_dir;
 use error::{Error, Result};
 use stardict::{lookup, StarDict};
 
@@ -15,53 +18,79 @@ pub async fn lookup_online(word: &str) -> Result<()> {
     Ok(())
 }
 
-pub async fn query(
-    path: Option<String>,
-    local_first: bool,
-    exact: bool,
-    word: String,
-) -> Result<()> {
-    if let Some(path) = path {
-        // use offline dictionary
-        let stardict = StarDict::new(path.into())?;
+pub fn lookup_offline(path: PathBuf, exact: bool, word: &str) -> Result<()> {
+    let stardict = StarDict::new(path)?;
 
-        if exact {
-            // assuming no typos, look up for exact results
-            let entry = stardict
-                .exact_lookup(&word)
-                .ok_or(Error::WordNotFound(stardict.dict_name().to_string()))?;
-            println!("{}\n{}", entry.word, entry.trans);
-            history::add_history(&word, &None)?;
-        } else {
-            // enable fuzzy search
-            match stardict.lookup(&word) {
-                Ok(found) => match found {
-                    lookup::Found::Exact(entry) => {
-                        println!("{}\n{}", entry.word, entry.trans);
-                        history::add_history(&word, &None)?;
-                    }
-                    lookup::Found::Fuzzy(entries) => {
-                        println!("Fuzzy search enabled");
-                        entries.into_iter().for_each(|e| {
-                            println!(
-                                "==============================\n>>>>> {} <<<<<\n{}",
-                                e.word, e.trans
-                            );
-                        })
-                    }
-                },
-                Err(e) => {
-                    if local_first {
-                        lookup_online(&word).await?;
-                    } else {
-                        return Err(e);
-                    }
+    if exact {
+        // assuming no typos, look up for exact results
+        let entry = stardict
+            .exact_lookup(&word)
+            .ok_or(Error::WordNotFound(stardict.dict_name().to_string()))?;
+        println!("{}\n{}", entry.word, entry.trans);
+        history::add_history(&word, &None)?;
+    } else {
+        // enable fuzzy search
+        match stardict.lookup(&word) {
+            Ok(found) => match found {
+                lookup::Found::Exact(entry) => {
+                    println!("{}\n{}", entry.word, entry.trans);
+                    history::add_history(&word, &None)?;
                 }
+                lookup::Found::Fuzzy(entries) => {
+                    println!("Fuzzy search enabled");
+                    entries.into_iter().for_each(|e| {
+                        println!(
+                            "==============================\n>>>>> {} <<<<<\n{}",
+                            e.word, e.trans
+                        );
+                    })
+                }
+            },
+            Err(e) => {
+                return Err(e);
             }
         }
-    } else {
-        // only use online dictionary
-        lookup_online(&word).await?;
     }
+
     Ok(())
+}
+
+pub async fn query(online: bool, local_first: bool, exact: bool, word: String) -> Result<()> {
+    if online {
+        // only use online dictionary
+        return lookup_online(&word).await;
+    }
+
+    let mut path = config_dir().ok_or(Error::ConfigDirNotFound)?;
+    path.push("rmall");
+
+    let mut dicts: Vec<_> = path
+        .read_dir()
+        .map_err(|_| Error::ConfigDirNotFound)?
+        .into_iter()
+        .filter_map(|x| x.ok())
+        .collect();
+
+    dicts.sort_by(|a, b| a.file_name().cmp(&b.file_name()));
+
+    for d in dicts {
+        // use offline dictionary
+        if let Err(e) = lookup_offline(d.path(), exact, &word) {
+            println!("{:?}", e);
+        } else {
+            return Ok(());
+        }
+    }
+
+    let all_fail = Error::WordNotFound("All Dictionaries".to_string());
+    if local_first {
+        if let Err(e) = lookup_online(&word).await {
+            println!("{:?}", e);
+            Err(all_fail)
+        } else {
+            Ok(())
+        }
+    } else {
+        Err(all_fail)
+    }
 }

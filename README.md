@@ -30,31 +30,52 @@ cargo install --git https://github.com/vaaandark/rmall
 $ rmall lookup [OPTIONS] <WORD>
 ```
 
+子命令 `lookup` 可以省略：
+
+```console
+$ rmall [OPTIONS] <WORD>
+```
+
 支持模糊搜索(fuzzy search)，在词典中没有找到单词时会输出最相似的一个或多个单词的释义。
 
-如果需要本地词典，则可以使用 `-l` 或 `--local` 选项指定词典文件目录：
+默认使用本地词典，本地词典目录应当存放在：
+
+|Platform | Value                                             | Example                                        |
+| ------- | ------------------------------------------------- | ---------------------------------------------- |
+| Linux   | `$XDG_CONFIG_HOME/rmall` or `$HOME`/.config/rmall | /home/alice/.config/rmall                      |
+| macOS   | `$HOME`/Library/Application Support/rmall         | /Users/Alice/Library/Application Support/rmall |
+| Windows | `{FOLDERID_RoamingAppData}`/rmall                 | C:\Users\Alice\AppData\Roaming/rmall           |
 
 > 只支持 stardict 的词典格式
 
 > 可以在 http://download.huzheng.org/ 下载 stardict 格式词典
 
 ```plain
-    cdict-gb
+~/.config/rmall
+├── 00-cdict-gb
+├── 01-kdic-computer-gb
+├── 02-langdao-ec-gb
+├── 03-oxford-gb
+└── 04-powerword2011_1_900
+
+    00-cdict-gb
     ├── cdict-gb.dict
     ├── cdict-gb.dict.dz
     ├── cdict-gb.idx
     └── cdict-gb.ifo
-
-Their prefixes needn't be the same as the dirname.
 ```
 
-在本地词典查询：
+使用 `-x` 选项会使用在线词典查询：
 
 ```console
-$ lookup -l <DICTDIR> <WORD>
+$ rmall -x <DICTDIR> <WORD>
 ```
 
-使用 `-L` 选项则会在本地查询失败后使用网络词典。
+使用 `-l` 选项则会在本地查询失败后使用网络词典。推荐在 shell 配置文件中加入 `alias rl='rmall -l'`。
+
+### 多字典支持
+
+如上文示例中，可以将词典目录分别命名为 `00-XXX`, `01-YYY`, ..., `99-ZZZ` 这样的格式来实现优先级。
 
 ### 列出记录
 
@@ -76,21 +97,3 @@ CET4 | CET6 | CET8 | TOEFL | IELTS | GMAT | GRE | SAT
 ```console
 $ rmall count
 ```
-
-### 多字典支持
-
-暂时没有在程序中集成多字典，但是可以通过 Shell 脚本实现类似的效果：
-
-```console
-$ trans terraria
-Error: WordNotFound("朗道英汉字典5.0")
-Error: WordNotFound("牛津现代英汉双解词典")
-Error: WordNotFound("CDICT5英汉辞典")
-Error: WordNotFound("计算机词汇")
-terraria
-英 / tɛˈrɛːrɪə / 美 / tɛˈrɛːrɪə /
- 泰拉瑞亚（游戏名）
-  Xbox Live ArcadeMarch 27, 2013PlayStation VitaLate Fall 2013iOSAugust 29, 2013http://www.terrariaonline.
-```
-
-脚本在 `scripts/` 目录。
