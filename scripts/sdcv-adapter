@@ -1,0 +1,128 @@
+#!/usr/bin/env perl
+use v5.12;
+use utf8;
+use warnings;
+use open qw(:std :utf8);
+
+use Getopt::Long;
+use Term::ReadLine;
+
+my %opt = map {
+    s/_/-/gr => undef
+} qw/
+help version
+list_dicts use_dict
+exact_search
+
+non_interactive only_data_dir data_dir
+json utf8_output utf8_input color
+/;
+
+sub help {
+    print <<'eof';
+Usage:
+  sdcv [OPTION…]  words
+
+Help Options:
+  -h, --help                     Show help options
+
+Application Options:
+  -v, --version                  display version information and exit
+  -l, --list-dicts               display list of available dictionaries and exit
+  -u, --use-dict=bookname        for search use only dictionary with this bookname
+  -n, --non-interactive          for use in scripts
+  -j, --json-output              print the result formatted as JSON
+  -e, --exact-search             do not fuzzy-search for similar words, only return exact matches
+  -0, --utf8-output              output must be in utf8
+  -1, --utf8-input               input of sdcv in utf8
+  -2, --data-dir=path/to/dir     use this directory as path to stardict data directory
+  -x, --only-data-dir            only use the dictionaries in data-dir, do not search in user and system directories
+  -c, --color                    colorize the output
+eof
+    exit;
+}
+
+sub version {
+    exec "rmall --version"
+}
+
+sub list_dicts {
+    ...;
+    exit
+}
+
+sub fuzzy_search {
+    if (defined $opt{use_dict}) {
+        system qw/rmall -L -l/, $opt{use_dict}, '--', $_ for (@_);
+    } else {
+        system qw/rmall -L --/, $_ for (@_);
+    }
+}
+
+sub full_text_search {
+    if (defined $opt{use_dict}) {
+        system qw/rmall -L -e -l/, $opt{use_dict}, '--', $_ for (@_);
+    } else {
+        system qw/rmall -L -e --/, $_ for (@_);
+    }
+}
+
+sub regexp_search {
+    die "not implemented in rmall"
+}
+
+sub search {
+    for (@_) {
+        if (/^[\/]/) {
+            fuzzy_search substr $_, 1
+        } elsif (/^[|]/) {
+            full_text_search substr $_, 1
+        } elsif (/[?*]/) {
+            regexp_search $_
+        } else {
+            fuzzy_search $_
+        }
+    }
+}
+
+sub repl {
+    my $term = Term::ReadLine->new('sdcv');
+    my $prompt = 'Enter word or phrase:';
+    my $out = $term->OUT || \*STDOUT;
+    while (defined ($_ = $term->readline($prompt)) ) {
+        chomp;
+        search $_;
+        $term->addhistory($_) if /\S/;
+    }
+}
+
+GetOptions(
+    'h|help' => \$opt{help},
+    'v|version' => \$opt{version},
+    'l|list-dicts' => \$opt{list_dicts},
+    'e|exact-search' => \$opt{exact_search},
+    'u|use-dict:s' => \$opt{use_dict},
+
+    'n|non-interactive' => \$opt{non_interactive},
+    'x|only-data-dir:s' => \$opt{only_data_dir},
+    'data-dir:s' => \$opt{data_dir},
+    'j|json' => \$opt{json},
+    'utf8-output' => \$opt{utf8_output},
+    'utf8-input' => \$opt{utf8_input},
+    'color' => \$opt{color},
+) or help;
+
+help if defined $opt{help};
+version if defined $opt{version};
+list_dicts if defined $opt{list_dicts};
+
+unless (scalar @ARGV) {
+    exit if defined $opt{non_interactive};
+    repl
+}
+
+if (defined $opt{exact_search}) {
+    full_text_search @ARGV
+} else {
+    search @ARGV
+}
