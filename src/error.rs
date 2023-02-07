@@ -50,6 +50,10 @@ pub enum Error {
     #[error("transparent")]
     CannotOpenDictFile,
 
+    /// something wrong with your dict file directory
+    #[error("transparent")]
+    DictFileDirError,
+
     /// something wrong with your dict file
     #[error("transparent")]
     DictFileError,

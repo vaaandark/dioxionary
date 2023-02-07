@@ -45,7 +45,7 @@ $ rmall lookup [OPTIONS] <WORD>
     ├── cdict-gb.idx
     └── cdict-gb.ifo
 
-Their prefixes must be the same as the dirname.
+Their prefixes needn't be the same as the dirname.
 ```
 
 在本地词典查询：

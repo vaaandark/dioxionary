@@ -29,11 +29,29 @@ pub mod lookup {
 #[allow(unused)]
 impl<'a> StarDict {
     pub fn new(path: PathBuf) -> Result<StarDict> {
-        let dir = path.file_name().ok_or(Error::PathError)?;
-        let dir = dir.to_str().unwrap();
-        let ifo = Ifo::new(path.join(format!("{}.ifo", dir)))?;
-        let idx = Idx::new(path.join(format!("{}.idx", dir)), ifo.version())?;
-        let dict = Dict::new(path.join(format!("{}.dict.dz", dir)))?;
+        let mut ifo: Option<_> = None;
+        let mut idx: Option<_> = None;
+        let mut dict: Option<_> = None;
+
+        for p in path.read_dir().map_err(|_| Error::PathError)? {
+            let path = p.map_err(|_| Error::PathError)?.path();
+            if let Some(extension) = path.extension() {
+                match extension.to_str().unwrap() {
+                    "ifo" => ifo = Some(path),
+                    "idx" => idx = Some(path),
+                    "dz" => dict = Some(path),
+                    _ => ()
+                }
+            }
+        }
+
+        let ifo = ifo.ok_or(Error::DictFileDirError)?;
+        let idx = idx.ok_or(Error::DictFileDirError)?;
+        let dict = dict.ok_or(Error::DictFileDirError)?;
+
+        let ifo = Ifo::new(ifo)?;
+        let idx = Idx::new(idx, ifo.version())?;
+        let dict = Dict::new(dict)?;
         Ok(StarDict { ifo, idx, dict })
     }
 
