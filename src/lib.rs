@@ -130,6 +130,7 @@ pub async fn repl(
         let readline = rl.readline(">> ");
         match readline {
             Ok(word) => {
+                rl.add_history_entry(&word);
                 if let Err(e) = query(online, local_first, exact, word, path).await {
                     println!("{:?}", e);
                 }
