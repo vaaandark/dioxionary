@@ -3,10 +3,11 @@ pub mod dict;
 pub mod error;
 pub mod history;
 pub mod stardict;
-use std::path::PathBuf;
+use std::{fs::DirEntry, path::PathBuf};
 
 use dirs::config_dir;
 use error::{Error, Result};
+use prettytable::{Attr, Cell, Row, Table};
 use rustyline::{error::ReadlineError, Editor};
 use stardict::{lookup, StarDict};
 
@@ -56,6 +57,22 @@ fn lookup_offline(path: PathBuf, exact: bool, word: &str) -> Result<()> {
     Ok(())
 }
 
+fn get_dicts_entries() -> Result<Vec<DirEntry>> {
+    let mut path = config_dir().ok_or(Error::ConfigDirNotFound)?;
+    path.push("rmall");
+
+    let mut dicts: Vec<_> = path
+        .read_dir()
+        .map_err(|_| Error::ConfigDirNotFound)?
+        .into_iter()
+        .filter_map(|x| x.ok())
+        .collect();
+
+    dicts.sort_by(|a, b| a.file_name().cmp(&b.file_name()));
+
+    Ok(dicts)
+}
+
 pub async fn query(
     online: bool,
     local_first: bool,
@@ -85,19 +102,7 @@ pub async fn query(
         return lookup_offline(path.into(), exact, word);
     }
 
-    let mut path = config_dir().ok_or(Error::ConfigDirNotFound)?;
-    path.push("rmall");
-
-    let mut dicts: Vec<_> = path
-        .read_dir()
-        .map_err(|_| Error::ConfigDirNotFound)?
-        .into_iter()
-        .filter_map(|x| x.ok())
-        .collect();
-
-    dicts.sort_by(|a, b| a.file_name().cmp(&b.file_name()));
-
-    for d in dicts {
+    for d in get_dicts_entries()? {
         // use offline dictionary
         if let Err(e) = lookup_offline(d.path(), exact, word) {
             println!("{:?}", e);
@@ -140,4 +145,23 @@ pub async fn repl(
             _ => break Err(Error::ReadlineError),
         }
     }
+}
+
+pub fn list_dicts() -> Result<()> {
+    let mut table: Table = Table::new();
+    table.add_row(Row::new(vec![
+        Cell::new("Dictionary's name").with_style(Attr::Bold),
+        Cell::new("Word count").with_style(Attr::Bold),
+    ]));
+    get_dicts_entries()?.into_iter().for_each(|x| {
+        if let Ok(stardict) = StarDict::new(x.path()) {
+            let row = Row::new(vec![
+                Cell::new(stardict.dict_name()),
+                Cell::new(stardict.wordcount().to_string().as_str()),
+            ]);
+            table.add_row(row);
+        }
+    });
+    table.printstd();
+    Ok(())
 }

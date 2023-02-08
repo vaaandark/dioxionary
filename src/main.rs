@@ -1,7 +1,7 @@
 use rmall::{
     cli::{Action, Cli, Parser},
     error::Result,
-    history, query, repl,
+    history, list_dicts, query, repl,
 };
 use tokio;
 
@@ -22,6 +22,7 @@ async fn main() -> Result<()> {
                     Ok(())
                 }
             }
+            Action::Dicts => list_dicts(),
         }
     } else {
         if let Some(word) = cli.word {

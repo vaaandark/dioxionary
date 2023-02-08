@@ -49,6 +49,9 @@ pub enum Action {
 
     /// count the number of each type
     Count,
+
+    /// display list of available dictionaries and exit
+    Dicts,
 }
 
 #[derive(Args, Debug)]

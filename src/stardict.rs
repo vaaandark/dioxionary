@@ -138,6 +138,10 @@ impl<'a> StarDict {
     pub fn dict_name(&'a self) -> &'a str {
         &self.ifo.bookname
     }
+
+    pub fn wordcount(&self) -> usize {
+        self.ifo.wordcount
+    }
 }
 
 /// bookname=      // required
