@@ -43,11 +43,12 @@ $ rmall [OPTIONS] [WORD]
 
 支持并默认使用模糊搜索(fuzzy search)，在词典中没有找到单词时会输出最相似的一个或多个单词的释义。
 
-使用 `-e` 或者 `--exact-search` 可以关闭模糊搜索。也可以通过在单词前添加 `/` 或者 `|` 来打开或关闭模糊搜索。
+使用 `-e` 或者 `--exact-search` 可以关闭模糊搜索。也可以通过在单词前添加 `/` 或者 `|` 来打开或关闭模糊搜索，在单词前添加 `@` 使用网络词典。
 
 ```console
-$ rmall /terraria # 模糊搜索
+$ rmall /terraria   # 模糊搜索
 $ rmall '|terraria' # 非模糊搜索，注意使用引号
+$ rmall @terraria   # 使用网络词典
 ```
 
 默认使用本地词典，本地词典目录应当存放在：

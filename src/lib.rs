@@ -81,6 +81,19 @@ pub async fn query(
     path: &Option<String>,
 ) -> Result<()> {
     let mut word = word.as_str();
+    let online = word.chars().nth(0).map_or(online, |c| {
+        if c == '@' {
+            word = &word[1..];
+            true
+        } else {
+            false
+        }
+    });
+    if online {
+        // only use online dictionary
+        return lookup_online(&word).await;
+    }
+
     let exact = match word.chars().nth(0) {
         Some('|') => {
             word = &word[1..];
@@ -92,11 +105,6 @@ pub async fn query(
         }
         _ => exact,
     };
-
-    if online {
-        // only use online dictionary
-        return lookup_online(&word).await;
-    }
 
     if let Some(path) = path {
         return lookup_offline(path.into(), exact, word);

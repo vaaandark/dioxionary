@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.1.3] - 2023-02-09
+
+### Features
+
+- Determine whether to use online dictionary by the leading character
+
+### Miscellaneous Tasks
+
+- Add CHANGELOG
+
+### Refactor
+
+- Rewrite the idx tool in Lua
+
 ## [0.1.2] - 2023-02-08
 
 ### Documentation
@@ -11,10 +25,6 @@ All notable changes to this project will be documented in this file.
 ### Features
 
 - Add support for list all available dictionaries
-
-### Miscellaneous Tasks
-
-- Add CHANGELOG
 
 ## [0.1.1] - 2023-02-07
 
