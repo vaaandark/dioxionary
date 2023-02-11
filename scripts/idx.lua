@@ -1,19 +1,11 @@
 #!/usr/bin/env lua
---[[
-Usage: ./idx.lua path/to/idx
-       or version 3.0.0
-       ./idx.lua -3 path/to/idx
---]]
 
-local f
-local pattern
-if arg[1] == '-3' then
-  pattern=">zI8I8"
-  f = arg[2]
-else
-  pattern=">zI4I4"
-  f = arg[1]
-end
+-- Usage: ./idx.lua path/to/idx
+--        or version 3.0.0
+--        ./idx.lua path/to/idx -3
+
+local f = arg[1]
+local pattern = arg[2] == '-3' and ">zI8I8" or ">zI4I4"
 
 f = assert(io.open(f, "rb"))
 local contents = f:read("a")
