@@ -51,8 +51,11 @@ impl<'a> StarDict {
         let dict = dict.ok_or(Error::StarDictDirError(path.into()))?;
 
         let ifo = Ifo::new(ifo)?;
-        let idx = Idx::new(idx, ifo.version())?;
+        let mut idx = Idx::new(idx, ifo.version())?;
         let dict = Dict::new(dict)?;
+
+        idx.items.retain(|(word, offset, size)| offset + size < dict.contents.len());
+
         Ok(StarDict { ifo, idx, dict })
     }
 
@@ -287,17 +290,27 @@ impl Idx {
         let mut f = BufReader::new(f);
 
         let mut items: Vec<_> = Vec::new();
-        let mut buf: Vec<u8> = Vec::new();
 
-        while let Ok(n) = f.read_until(0, &mut buf) {
-            if n == 0 {
-                break;
+        loop {
+            let mut buf: Vec<u8> = Vec::new();
+
+            let read_bytes = f.read_until(0, &mut buf)
+                .map_err(|_| Error::DictFileError)?;
+
+            if read_bytes == 0 {
+                break
             }
 
-            buf.pop();
-            let mut word = String::new();
-            buf.iter().for_each(|x| word.push(*x as char));
-            buf.clear();
+            if let Some(&trailing) = buf.last() {
+                if trailing == b'\0' {
+                    buf.pop();
+                }
+            }
+
+            let mut word: String = String::from_utf8_lossy(&buf)
+                .chars()
+                .filter(|&c| c != '\u{fffd}')
+                .collect();
 
             let mut b = [0; N];
             f.read(&mut b).map_err(|_| Error::IdxFileParsingError)?;
@@ -307,7 +320,9 @@ impl Idx {
             f.read(&mut b).map_err(|_| Error::IdxFileParsingError)?;
             let size = T::from_be_bytes(b).try_into().unwrap();
 
-            items.push((word, offset, size))
+            if ! word.is_empty() {
+                items.push((word, offset, size))
+            }
         }
         Ok(items)
     }
