@@ -86,7 +86,7 @@ pub async fn query(
             word = &word[1..];
             true
         } else {
-            false
+            online
         }
     });
     if online {
