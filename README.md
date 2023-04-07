@@ -1,6 +1,6 @@
 # rmall
 
-Remember all words in terminal **offline** / **online**!
+[简体中文](README.md) | [English](README-en.md)
 
 使用 **离线** / **在线** 词典在终端中查单词、背单词！
 
@@ -93,6 +93,8 @@ $ rmall -x <DICTDIR> <WORD>
 如上文示例中，可以将词典目录分别命名为 `00-XXX`, `01-YYY`, ..., `99-ZZZ` 这样的格式来实现优先级。
 
 ### 列出记录
+
+> 注意：只有在线查词时会查得并记录单词类型
 
 ```console
 $ rmall list [OPTIONS] [TYPE]
