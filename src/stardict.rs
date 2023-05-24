@@ -40,7 +40,7 @@ impl<'a> StarDict {
                     "ifo" => ifo = Some(path),
                     "idx" => idx = Some(path),
                     "dz" => dict = Some(path),
-                    _ => ()
+                    _ => (),
                 }
             }
         }
@@ -54,7 +54,8 @@ impl<'a> StarDict {
         let mut idx = Idx::new(idx, ifo.version())?;
         let dict = Dict::new(dict)?;
 
-        idx.items.retain(|(word, offset, size)| offset + size < dict.contents.len());
+        idx.items
+            .retain(|(word, offset, size)| offset + size < dict.contents.len());
 
         Ok(StarDict { ifo, idx, dict })
     }
@@ -65,7 +66,7 @@ impl<'a> StarDict {
                 .0
                 .to_lowercase()
                 .cmp(&word.to_lowercase())
-                .then(probe.0.as_str().cmp(&word))
+                .then(probe.0.as_str().cmp(word))
         }) {
             let (word, offset, size) = &self.idx.items[pos];
             let trans = self.dict.get(*offset, *size);
@@ -79,6 +80,8 @@ impl<'a> StarDict {
         let pattern_chars: Vec<_> = pattern.chars().collect();
         let text_chars: Vec<_> = text.chars().collect();
         let mut dist = vec![vec![0; pattern_chars.len() + 1]; text_chars.len() + 1];
+
+        #[allow(clippy::needless_range_loop)]
         for i in 0..=text_chars.len() {
             dist[i][0] = i;
         }
@@ -107,11 +110,7 @@ impl<'a> StarDict {
             .filter(|s| !s.0.is_empty())
             .map(|s| Self::min_edit_distance(&word.to_lowercase(), &s.0.to_lowercase()))
             .collect();
-        let min_dist = if let Some(dist) = distances.iter().min() {
-            dist
-        } else {
-            return None;
-        };
+        let min_dist = distances.iter().min()?;
         let result = self
             .idx
             .items
@@ -155,7 +154,7 @@ impl<'a> StarDict {
 /// author=
 /// email=
 /// website=
-/// description=	// You can use <br> for new line.
+/// description=   // You can use <br> for new line.
 /// date=
 /// sametypesequence= // very important.
 /// dicttype=
@@ -281,7 +280,7 @@ struct Idx {
 
 #[allow(unused)]
 impl Idx {
-    fn read_bytes<'a, const N: usize, T>(path: PathBuf) -> Result<Vec<(String, usize, usize)>>
+    fn read_bytes<const N: usize, T>(path: PathBuf) -> Result<Vec<(String, usize, usize)>>
     where
         T: FromBytes<N> + TryInto<usize>,
         <T as TryInto<usize>>::Error: Debug,
@@ -294,11 +293,12 @@ impl Idx {
         loop {
             let mut buf: Vec<u8> = Vec::new();
 
-            let read_bytes = f.read_until(0, &mut buf)
+            let read_bytes = f
+                .read_until(0, &mut buf)
                 .map_err(|_| Error::DictFileError)?;
 
             if read_bytes == 0 {
-                break
+                break;
             }
 
             if let Some(&trailing) = buf.last() {
@@ -320,7 +320,7 @@ impl Idx {
             f.read(&mut b).map_err(|_| Error::IdxFileParsingError)?;
             let size = T::from_be_bytes(b).try_into().unwrap();
 
-            if ! word.is_empty() {
+            if !word.is_empty() {
                 items.push((word, offset, size))
             }
         }

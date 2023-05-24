@@ -10,7 +10,7 @@ fn gen_url(word: &str) -> String {
 
 fn is_enword(word: &str) -> bool {
     word.as_bytes()
-        .into_iter()
+        .iter()
         .all(|x| x.is_ascii_alphabetic() || x.is_ascii_whitespace())
 }
 
@@ -28,10 +28,10 @@ async fn get_html(word: &str) -> Result<Html> {
 fn zh2en(html: &Html) -> Result<String> {
     let mut res = String::new();
     let trans = Selector::parse("ul.basic").map_err(|_| Error::HtmlParsingError)?;
-    html.select(&trans).into_iter().for_each(|x| {
+    html.select(&trans).for_each(|x| {
         x.text().collect::<Vec<_>>().iter().for_each(|x| {
             res.push_str(x);
-            res.push_str("\n");
+            res.push('\n');
         });
     });
     Ok(res)
@@ -40,23 +40,23 @@ fn zh2en(html: &Html) -> Result<String> {
 fn en2zh(html: &Html) -> Result<String> {
     let mut res = String::new();
     let phonetic = Selector::parse(".per-phone").map_err(|_| Error::HtmlParsingError)?;
-    html.select(&phonetic).into_iter().for_each(|x| {
+    html.select(&phonetic).for_each(|x| {
         x.text().collect::<Vec<_>>().iter().for_each(|x| {
             res.push_str(x);
-            res.push_str(" ");
+            res.push(' ');
         });
     });
-    res.push_str("\n");
+    res.push('\n');
     let mut pos_text: Vec<&str> = Vec::new();
     let pos = Selector::parse(".pos").map_err(|_| Error::HtmlParsingError)?;
-    html.select(&pos).into_iter().for_each(|x| {
+    html.select(&pos).for_each(|x| {
         x.text().collect::<Vec<_>>().iter().for_each(|x| {
             pos_text.push(*x);
         });
     });
     let mut trans_text: Vec<&str> = Vec::new();
     let trans = Selector::parse(".trans").map_err(|_| Error::HtmlParsingError)?;
-    html.select(&trans).into_iter().for_each(|x| {
+    html.select(&trans).for_each(|x| {
         x.text().collect::<Vec<_>>().iter().for_each(|x| {
             trans_text.push(*x);
         });
@@ -78,7 +78,7 @@ fn en2zh(html: &Html) -> Result<String> {
 fn get_exam_type(html: &Html) -> Result<Vec<String>> {
     let types = Selector::parse(".exam_type-value").map_err(|_| Error::HtmlParsingError)?;
     let mut res: Vec<String> = Vec::new();
-    html.select(&types).into_iter().for_each(|x| {
+    html.select(&types).for_each(|x| {
         x.text()
             .collect::<Vec<_>>()
             .iter()
@@ -106,11 +106,11 @@ impl WordItem {
     pub fn is_en(&self) -> bool {
         self.is_en
     }
-    pub fn word<'a>(&'a self) -> &'a str {
+    pub fn word(&self) -> &str {
         &self.word
     }
     #[allow(unused)]
-    pub fn trans<'a>(&'a self) -> &'a str {
+    pub fn trans(&self) -> &str {
         &self.trans
     }
     #[allow(unused)]
@@ -123,7 +123,7 @@ impl fmt::Display for WordItem {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let mut types_contents = String::new();
         if let Some(types) = &self.types {
-            types_contents.push_str("\n");
+            types_contents.push('\n');
             types
                 .iter()
                 .for_each(|x| types_contents.push_str(&format!("<{}> ", x)))
@@ -133,7 +133,7 @@ impl fmt::Display for WordItem {
 }
 
 pub async fn lookup(word: &str) -> Result<WordItem> {
-    let html = get_html(&word).await?;
+    let html = get_html(word).await?;
     let is_en = is_enword(word);
     let dirction = if is_en { en2zh } else { zh2en };
     let trans = dirction(&html)?.trim().to_string();
