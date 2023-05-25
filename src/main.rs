@@ -3,7 +3,6 @@ use rmall::{
     error::Result,
     history, list_dicts, query, repl,
 };
-use tokio;
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -24,20 +23,18 @@ async fn main() -> Result<()> {
             }
             Action::Dicts => list_dicts(),
         }
+    } else if let Some(word) = cli.word {
+        query(
+            cli.online,
+            cli.local_first,
+            cli.exact_search,
+            word,
+            &cli.local,
+        )
+        .await
+    } else if !cli.non_interactive {
+        repl(cli.online, cli.local_first, cli.exact_search, &cli.local).await
     } else {
-        if let Some(word) = cli.word {
-            query(
-                cli.online,
-                cli.local_first,
-                cli.exact_search,
-                word,
-                &cli.local,
-            )
-            .await
-        } else if !cli.non_interactive {
-            repl(cli.online, cli.local_first, cli.exact_search, &cli.local).await
-        } else {
-            Ok(())
-        }
+        Ok(())
     }
 }

@@ -27,7 +27,7 @@ pub fn add_history(word: &str, types: &Option<Vec<String>>) -> Result<()> {
 
     let path = check_cache()?;
 
-    let conn = Connection::open(&path)?;
+    let conn = Connection::open(path)?;
     conn.execute(
         "CREATE TABLE IF NOT EXISTS HISTORY (
         WORD TEXT PRIMARY KEY,
@@ -73,7 +73,7 @@ pub fn list_history(type_: Option<String>, sort: bool, table: bool, column: usiz
         }
     }
 
-    let conn = Connection::open(&path)?;
+    let conn = Connection::open(path)?;
 
     let mut stmt = conn.prepare(&stmt)?;
     let word_iter = stmt.query_map([], |row| row.get(0) as rusqlite::Result<String>)?;
@@ -86,8 +86,8 @@ pub fn list_history(type_: Option<String>, sort: bool, table: bool, column: usiz
 
     if table {
         let mut table = Table::new();
-        words.chunks(column).into_iter().for_each(|x| {
-            table.add_row(x.into_iter().map(|x| Cell::new(x)).collect());
+        words.chunks(column).for_each(|x| {
+            table.add_row(x.iter().map(|x| Cell::new(x)).collect());
         });
         table.printstd();
     } else {
@@ -102,7 +102,7 @@ pub fn list_history(type_: Option<String>, sort: bool, table: bool, column: usiz
 pub fn count_history() -> Result<()> {
     let path = check_cache()?;
 
-    let conn = Connection::open(&path)?;
+    let conn = Connection::open(path)?;
 
     let header: Row = ALLOWED_TYPES
         .into_iter()

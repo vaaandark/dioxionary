@@ -26,17 +26,17 @@ fn lookup_offline(path: PathBuf, exact: bool, word: &str) -> Result<()> {
     if exact {
         // assuming no typos, look up for exact results
         let entry = stardict
-            .exact_lookup(&word)
+            .exact_lookup(word)
             .ok_or(Error::WordNotFound(stardict.dict_name().to_string()))?;
         println!("{}\n{}", entry.word, entry.trans);
-        history::add_history(&word, &None)?;
+        history::add_history(word, &None)?;
     } else {
         // enable fuzzy search
-        match stardict.lookup(&word) {
+        match stardict.lookup(word) {
             Ok(found) => match found {
                 lookup::Found::Exact(entry) => {
                     println!("{}\n{}", entry.word, entry.trans);
-                    history::add_history(&word, &None)?;
+                    history::add_history(word, &None)?;
                 }
                 lookup::Found::Fuzzy(entries) => {
                     println!("Fuzzy search enabled");
@@ -64,11 +64,10 @@ fn get_dicts_entries() -> Result<Vec<DirEntry>> {
     let mut dicts: Vec<_> = path
         .read_dir()
         .map_err(|_| Error::ConfigDirNotFound)?
-        .into_iter()
         .filter_map(|x| x.ok())
         .collect();
 
-    dicts.sort_by(|a, b| a.file_name().cmp(&b.file_name()));
+    dicts.sort_by_key(|a| a.file_name());
 
     Ok(dicts)
 }
@@ -81,7 +80,7 @@ pub async fn query(
     path: &Option<String>,
 ) -> Result<()> {
     let mut word = word.as_str();
-    let online = word.chars().nth(0).map_or(online, |c| {
+    let online = word.chars().next().map_or(online, |c| {
         if c == '@' {
             word = &word[1..];
             true
@@ -91,10 +90,10 @@ pub async fn query(
     });
     if online {
         // only use online dictionary
-        return lookup_online(&word).await;
+        return lookup_online(word).await;
     }
 
-    let exact = match word.chars().nth(0) {
+    let exact = match word.chars().next() {
         Some('|') => {
             word = &word[1..];
             true
@@ -121,7 +120,7 @@ pub async fn query(
 
     let all_fail = Error::WordNotFound("All Dictionaries".to_string());
     if local_first {
-        if let Err(e) = lookup_online(&word).await {
+        if let Err(e) = lookup_online(word).await {
             println!("{:?}", e);
             Err(all_fail)
         } else {
