@@ -10,7 +10,6 @@ license = "GPL2"
 
 [dependencies]
 reqwest = "0.11.11"
-tokio = { version = "1.20.0", features = ["full"] }
 hyper = "0.14.20"
 scraper = "0.13.0"
 dirs = "4.0.0"
@@ -24,3 +23,4 @@ eio = "0.1.2"
 flate2 = { version = "1.0.25", features = ["zlib"] }
 rustyline = "10.1.1"
 dialoguer = "0.10.4"
+tokio = { version = "1.28.2", features = ["rt"] }
