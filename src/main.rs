@@ -4,8 +4,7 @@ use rmall::{
     history, list_dicts, query, repl,
 };
 
-#[tokio::main]
-async fn main() -> Result<()> {
+fn main() -> Result<()> {
     let cli: Cli = Cli::parse();
 
     if let Some(action) = cli.action {
@@ -14,9 +13,9 @@ async fn main() -> Result<()> {
             Action::List(t) => history::list_history(t.type_, t.sort, t.table, t.column),
             Action::Lookup(w) => {
                 if let Some(word) = w.word {
-                    query(w.online, w.local_first, w.exact_search, word, &w.local).await
+                    query(w.online, w.local_first, w.exact_search, word, &w.local)
                 } else if !w.non_interactive {
-                    repl(w.online, w.local_first, w.exact_search, &w.local).await
+                    repl(w.online, w.local_first, w.exact_search, &w.local)
                 } else {
                     Ok(())
                 }
@@ -31,9 +30,8 @@ async fn main() -> Result<()> {
             word,
             &cli.local,
         )
-        .await
     } else if !cli.non_interactive {
-        repl(cli.online, cli.local_first, cli.exact_search, &cli.local).await
+        repl(cli.online, cli.local_first, cli.exact_search, &cli.local)
     } else {
         Ok(())
     }
