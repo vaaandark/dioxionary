@@ -5,6 +5,7 @@ pub mod history;
 pub mod stardict;
 use std::fs::DirEntry;
 
+use dialoguer::{console::Term, theme::ColorfulTheme, Select};
 use error::{Error, Result};
 use prettytable::{Attr, Cell, Row, Table};
 use rustyline::{error::ReadlineError, Editor};
@@ -136,11 +137,26 @@ pub async fn query(
                 .map(|x| x.fuzzy())
                 .collect::<Option<Vec<(&str, &Vec<lookup::Entry>)>>>()
             {
-                fuzzy_results.into_iter().for_each(|f| {
-                    println!("==============================\nSimilar words in {}:", f.0);
-                    f.1.into_iter()
-                        .for_each(|e| println!(">>>>> {} <<<<<\n{}", e.word, e.trans));
-                })
+                if let Some(selection) = Select::with_theme(&ColorfulTheme::default())
+                    .items(&fuzzy_results.iter().map(|x| x.0).collect::<Vec<&str>>())
+                    .default(0)
+                    .interact_on_opt(&Term::stderr())?
+                {
+                    if let Some(sub_selection) = Select::with_theme(&ColorfulTheme::default())
+                        .items(
+                            &fuzzy_results[selection]
+                                .1
+                                .iter()
+                                .map(|x| x.word)
+                                .collect::<Vec<&str>>(),
+                        )
+                        .default(0)
+                        .interact_on_opt(&Term::stderr())?
+                    {
+                        let entry = &fuzzy_results[selection].1[sub_selection];
+                        println!("{}\n{}", entry.word, entry.trans);
+                    }
+                }
             }
         }
         Ok(())
