@@ -147,12 +147,8 @@ pub fn lookup(word: &str) -> Result<WordItem> {
         if trans.is_empty() {
             Err(Error::WordNotFound("online".to_string()))
         } else {
-            let types = if is_en {
-                Some(get_exam_type(&html)?)
-            } else {
-                None
-            };
-            Ok(WordItem::new(word.to_string(), is_en, trans, types))
-        }
-    })
+            None
+        };
+        Ok(WordItem::new(word.to_string(), is_en, trans, types))
+    }
 }
