@@ -11,8 +11,8 @@ use prettytable::{Attr, Cell, Row, Table};
 use rustyline::{error::ReadlineError, Editor};
 use stardict::{lookup, StarDict};
 
-fn lookup_online(word: &str) -> Result<()> {
-    let word = dict::lookup(word)?;
+async fn lookup_online(word: &str) -> Result<()> {
+    let word = dict::lookup(word).await?;
     println!("{}", word);
     if word.is_en() {
         history::add_history(word.word(), word.types())?;
@@ -69,7 +69,7 @@ fn get_dicts_entries() -> Result<Vec<DirEntry>> {
     Ok(dicts)
 }
 
-pub fn query(
+pub async fn query(
     online: bool,
     local_first: bool,
     exact: bool,
@@ -87,7 +87,7 @@ pub fn query(
     });
     if online {
         // only use online dictionary
-        return lookup_online(word);
+        return lookup_online(word).await;
     }
 
     let exact = match word.chars().next() {
@@ -163,7 +163,7 @@ pub fn query(
     } else {
         let all_fail = Error::WordNotFound("All Dictionaries".to_string());
         if local_first {
-            if let Err(e) = lookup_online(word) {
+            if let Err(e) = lookup_online(word).await {
                 println!("{:?}", e);
                 Err(all_fail)
             } else {
@@ -175,7 +175,7 @@ pub fn query(
     }
 }
 
-pub fn repl(
+pub async fn repl(
     online: bool,
     local_first: bool,
     exact: bool,
@@ -187,7 +187,7 @@ pub fn repl(
         match readline {
             Ok(word) => {
                 rl.add_history_entry(&word);
-                if let Err(e) = query(online, local_first, exact, word, path) {
+                if let Err(e) = query(online, local_first, exact, word, path).await {
                     println!("{:?}", e);
                 }
             }
