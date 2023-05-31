@@ -3,7 +3,7 @@ pub mod dict;
 pub mod error;
 pub mod history;
 pub mod stardict;
-use std::{fs::DirEntry, path::PathBuf};
+use std::fs::DirEntry;
 
 use error::{Error, Result};
 use prettytable::{Attr, Cell, Row, Table};
@@ -19,41 +19,16 @@ async fn lookup_online(word: &str) -> Result<()> {
     Ok(())
 }
 
-fn lookup_offline(path: PathBuf, exact: bool, word: &str) -> Result<()> {
-    let stardict = StarDict::new(path)?;
-
+fn lookup_offline<'a>(
+    stardict: &'a StarDict,
+    exact: bool,
+    word: &str,
+) -> Result<lookup::Found<'a>> {
     if exact {
-        // assuming no typos, look up for exact results
-        let entry = stardict
-            .exact_lookup(word)
-            .ok_or(Error::WordNotFound(stardict.dict_name().to_string()))?;
-        println!("{}\n{}", entry.word, entry.trans);
-        history::add_history(word, &None)?;
+        stardict.exact_lookup(word)
     } else {
-        // enable fuzzy search
-        match stardict.lookup(word) {
-            Ok(found) => match found {
-                lookup::Found::Exact(entry) => {
-                    println!("{}\n{}", entry.word, entry.trans);
-                    history::add_history(word, &None)?;
-                }
-                lookup::Found::Fuzzy(entries) => {
-                    println!("Fuzzy search enabled");
-                    entries.into_iter().for_each(|e| {
-                        println!(
-                            "==============================\n>>>>> {} <<<<<\n{}",
-                            e.word, e.trans
-                        );
-                    })
-                }
-            },
-            Err(e) => {
-                return Err(e);
-            }
-        }
+        stardict.lookup(word)
     }
-
-    Ok(())
 }
 
 fn get_dicts_entries() -> Result<Vec<DirEntry>> {
@@ -127,28 +102,60 @@ pub async fn query(
     };
 
     if let Some(path) = path {
-        return lookup_offline(path.into(), exact, word);
+        let stardict = StarDict::new(path.into())?;
+        match lookup_offline(&stardict, exact, word) {
+            Ok(lookup::Found::Exact(entry)) => {
+                println!("{}\n{}", entry.word, entry.trans);
+                return Ok(());
+            }
+            Ok(lookup::Found::Fuzzy(_, _)) => {
+                unreachable!("Fuzzy search is not enabled in this mode!")
+            }
+            Err(e) => {
+                return Err(e);
+            }
+        }
     }
 
+    let mut dicts = Vec::new();
     for d in get_dicts_entries()? {
-        // use offline dictionary
-        if let Err(e) = lookup_offline(d.path(), exact, word) {
-            println!("{:?}", e);
-        } else {
-            return Ok(());
-        }
+        dicts.push(StarDict::new(d.path())?);
     }
 
-    let all_fail = Error::WordNotFound("All Dictionaries".to_string());
-    if local_first {
-        if let Err(e) = lookup_online(word).await {
-            println!("{:?}", e);
-            Err(all_fail)
+    if let Ok(results) = dicts
+        .iter()
+        .map(|d| lookup_offline(&d, exact, word))
+        .collect::<Result<Vec<lookup::Found>>>()
+    {
+        if let Some(first_entry) = results.iter().find_map(|x| x.exact()) {
+            println!("{}\n{}", first_entry.word, first_entry.trans);
         } else {
-            Ok(())
+            println!("Fuzzy search enabled");
+            if let Some(fuzzy_results) = results
+                .iter()
+                .map(|x| x.fuzzy())
+                .collect::<Option<Vec<(&str, &Vec<lookup::Entry>)>>>()
+            {
+                fuzzy_results.into_iter().for_each(|f| {
+                    println!("==============================\nSimilar words in {}:", f.0);
+                    f.1.into_iter()
+                        .for_each(|e| println!(">>>>> {} <<<<<\n{}", e.word, e.trans));
+                })
+            }
         }
+        Ok(())
     } else {
-        Err(all_fail)
+        let all_fail = Error::WordNotFound("All Dictionaries".to_string());
+        if local_first {
+            if let Err(e) = lookup_online(word).await {
+                println!("{:?}", e);
+                Err(all_fail)
+            } else {
+                Ok(())
+            }
+        } else {
+            Err(all_fail)
+        }
     }
 }
 

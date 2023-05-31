@@ -22,7 +22,23 @@ pub mod lookup {
 
     pub enum Found<'a> {
         Exact(Entry<'a>),
-        Fuzzy(Vec<Entry<'a>>),
+        Fuzzy(String, Vec<Entry<'a>>),
+    }
+
+    impl<'a> Found<'a> {
+        pub fn exact(&self) -> Option<&Entry<'a>> {
+            match self {
+                Self::Exact(entry) => Some(entry),
+                Self::Fuzzy(_, _) => None,
+            }
+        }
+
+        pub fn fuzzy(&self) -> Option<(&str, &Vec<Entry<'a>>)> {
+            match self {
+                Self::Exact(_) => None,
+                Self::Fuzzy(s, f) => Some((s, f)),
+            }
+        }
     }
 }
 
@@ -60,7 +76,7 @@ impl<'a> StarDict {
         Ok(StarDict { ifo, idx, dict })
     }
 
-    pub fn exact_lookup(&self, word: &str) -> Option<lookup::Entry> {
+    pub fn exact_lookup(&self, word: &str) -> Result<lookup::Found> {
         if let Ok(pos) = self.idx.items.binary_search_by(|probe| {
             probe
                 .0
@@ -70,9 +86,9 @@ impl<'a> StarDict {
         }) {
             let (word, offset, size) = &self.idx.items[pos];
             let trans = self.dict.get(*offset, *size);
-            Some(lookup::Entry { word, trans })
+            Ok(lookup::Found::Exact(lookup::Entry { word, trans }))
         } else {
-            None
+            Err(Error::WordNotFound(self.dict_name().to_string()))
         }
     }
 
@@ -128,10 +144,10 @@ impl<'a> StarDict {
     }
 
     pub fn lookup(&'a self, word: &str) -> Result<lookup::Found> {
-        if let Some(entry) = self.exact_lookup(word) {
-            Ok(lookup::Found::Exact(entry))
+        if let Ok(found) = self.exact_lookup(word) {
+            Ok(found)
         } else if let Some(entries) = self.fuzzy_lookup(word) {
-            Ok(lookup::Found::Fuzzy(entries))
+            Ok(lookup::Found::Fuzzy(self.dict_name().to_owned(), entries))
         } else {
             Err(Error::WordNotFound(self.dict_name().to_string()))
         }
