@@ -5,7 +5,6 @@ pub mod history;
 pub mod stardict;
 use std::{fs::DirEntry, path::PathBuf};
 
-use dirs::config_dir;
 use error::{Error, Result};
 use prettytable::{Attr, Cell, Row, Table};
 use rustyline::{error::ReadlineError, Editor};
@@ -58,8 +57,30 @@ fn lookup_offline(path: PathBuf, exact: bool, word: &str) -> Result<()> {
 }
 
 fn get_dicts_entries() -> Result<Vec<DirEntry>> {
-    let mut path = config_dir().ok_or(Error::ConfigDirNotFound)?;
-    path.push("rmall");
+    let mut rmall_dir = dirs::config_dir();
+    let rmall_dir = rmall_dir
+        .as_mut()
+        .map(|dir| {
+            dir.push("rmall");
+            dir
+        })
+        .filter(|dir| dir.is_dir());
+
+    let mut stardict_compatible_dir = dirs::home_dir();
+    let stardict_compatible_dir = stardict_compatible_dir
+        .as_mut()
+        .map(|dir| {
+            dir.push(".stardict");
+            dir.push("dic");
+            dir
+        })
+        .filter(|dir| dir.is_dir());
+
+    let path = match (&rmall_dir, &stardict_compatible_dir) {
+        (Some(dir), _) => dir,
+        (None, Some(dir)) => dir,
+        (None, None) => return Err(Error::ConfigDirNotFound),
+    };
 
     let mut dicts: Vec<_> = path
         .read_dir()
