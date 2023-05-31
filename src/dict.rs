@@ -134,6 +134,7 @@ impl fmt::Display for WordItem {
 
 pub fn lookup(word: &str) -> Result<WordItem> {
     let runtime = tokio::runtime::Builder::new_current_thread()
+        .enable_all()
         .build()
         .unwrap();
 
