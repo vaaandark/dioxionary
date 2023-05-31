@@ -132,26 +132,20 @@ impl fmt::Display for WordItem {
     }
 }
 
-pub fn lookup(word: &str) -> Result<WordItem> {
-    let runtime = tokio::runtime::Builder::new_current_thread()
-        .build()
-        .unwrap();
-
-    runtime.block_on(async {
-        let html = get_html(word).await?;
-        let is_en = is_enword(word);
-        let dirction = if is_en { en2zh } else { zh2en };
-        let trans = dirction(&html)?.trim().to_string();
-        // cannot find the word
-        if trans.is_empty() {
-            Err(Error::WordNotFound("online".to_string()))
+pub async fn lookup(word: &str) -> Result<WordItem> {
+    let html = get_html(word).await?;
+    let is_en = is_enword(word);
+    let dirction = if is_en { en2zh } else { zh2en };
+    let trans = dirction(&html)?.trim().to_string();
+    // cannot find the word
+    if trans.is_empty() {
+        Err(Error::WordNotFound("online".to_string()))
+    } else {
+        let types = if is_en {
+            Some(get_exam_type(&html)?)
         } else {
-            let types = if is_en {
-                Some(get_exam_type(&html)?)
-            } else {
-                None
-            };
-            Ok(WordItem::new(word.to_string(), is_en, trans, types))
-        }
-    })
+            None
+        };
+        Ok(WordItem::new(word.to_string(), is_en, trans, types))
+    }
 }
