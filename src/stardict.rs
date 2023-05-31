@@ -14,32 +14,9 @@ pub struct StarDict {
     dict: Dict,
 }
 
-pub mod lookup {
-    pub struct Entry<'a> {
-        pub word: &'a str,
-        pub trans: &'a str,
-    }
-
-    pub enum Found<'a> {
-        Exact(Entry<'a>),
-        Fuzzy(String, Vec<Entry<'a>>),
-    }
-
-    impl<'a> Found<'a> {
-        pub fn exact(&self) -> Option<&Entry<'a>> {
-            match self {
-                Self::Exact(entry) => Some(entry),
-                Self::Fuzzy(_, _) => None,
-            }
-        }
-
-        pub fn fuzzy(&self) -> Option<(&str, &Vec<Entry<'a>>)> {
-            match self {
-                Self::Exact(_) => None,
-                Self::Fuzzy(s, f) => Some((s, f)),
-            }
-        }
-    }
+pub struct Entry<'a> {
+    pub word: &'a str,
+    pub trans: &'a str,
 }
 
 #[allow(unused)]
@@ -76,7 +53,7 @@ impl<'a> StarDict {
         Ok(StarDict { ifo, idx, dict })
     }
 
-    pub fn exact_lookup(&self, word: &str) -> Result<lookup::Found> {
+    pub fn exact_lookup(&self, word: &str) -> Option<Entry> {
         if let Ok(pos) = self.idx.items.binary_search_by(|probe| {
             probe
                 .0
@@ -86,9 +63,9 @@ impl<'a> StarDict {
         }) {
             let (word, offset, size) = &self.idx.items[pos];
             let trans = self.dict.get(*offset, *size);
-            Ok(lookup::Found::Exact(lookup::Entry { word, trans }))
+            Some(Entry { word, trans })
         } else {
-            Err(Error::WordNotFound(self.dict_name().to_string()))
+            None
         }
     }
 
@@ -118,7 +95,7 @@ impl<'a> StarDict {
         dist[text_chars.len()][pattern_chars.len()]
     }
 
-    pub fn fuzzy_lookup(&self, word: &str) -> Option<Vec<lookup::Entry>> {
+    pub fn fuzzy_lookup(&self, word: &str) -> Option<Vec<Entry>> {
         let distances: Vec<_> = self
             .idx
             .items
@@ -137,20 +114,10 @@ impl<'a> StarDict {
             .map(|(_, x)| {
                 let (word, offset, size) = x;
                 let trans = self.dict.get(*offset, *size);
-                lookup::Entry { word, trans }
+                Entry { word, trans }
             })
             .collect::<Vec<_>>();
         Some(result)
-    }
-
-    pub fn lookup(&'a self, word: &str) -> Result<lookup::Found> {
-        if let Ok(found) = self.exact_lookup(word) {
-            Ok(found)
-        } else if let Some(entries) = self.fuzzy_lookup(word) {
-            Ok(lookup::Found::Fuzzy(self.dict_name().to_owned(), entries))
-        } else {
-            Err(Error::WordNotFound(self.dict_name().to_string()))
-        }
     }
 
     pub fn dict_name(&'a self) -> &'a str {
