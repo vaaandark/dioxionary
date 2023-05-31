@@ -36,6 +36,10 @@ pub struct Cli {
     #[arg(short, long)]
     pub non_interactive: bool,
 
+    /// Read aloud
+    #[arg(short, long)]
+    pub read_aloud: bool,
+
     pub word: Option<String>,
 }
 
@@ -75,6 +79,10 @@ pub struct Lookup {
     /// for use in scripts
     #[arg(short, long)]
     pub non_interactive: bool,
+
+    /// Read aloud
+    #[arg(short, long)]
+    pub read_aloud: bool,
 
     pub word: Option<String>,
 }

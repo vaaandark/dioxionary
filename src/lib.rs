@@ -63,6 +63,7 @@ pub fn query(
     exact: bool,
     word: String,
     path: &Option<String>,
+    read_aloud: bool,
 ) -> Result<()> {
     let mut word = word.as_str();
     let online = word.chars().next().map_or(online, |c| {
@@ -73,10 +74,6 @@ pub fn query(
             online
         }
     });
-    if online {
-        // only use online dictionary
-        return lookup_online(word);
-    }
 
     let exact = match word.chars().next() {
         Some('|') => {
@@ -90,63 +87,88 @@ pub fn query(
         _ => exact,
     };
 
-    let mut dicts = Vec::new();
-    if let Some(path) = path {
-        dicts.push(StarDict::new(path.into())?);
+    let len = word.len();
+    let read_aloud = match word.chars().last() {
+        Some('~') => {
+            word = &word[..len - 1];
+            true
+        }
+        _ => read_aloud,
+    };
+
+    if online {
+        // only use online dictionary
+        lookup_online(word)?;
     } else {
-        for d in get_dicts_entries()? {
-            dicts.push(StarDict::new(d.path())?);
+        let mut dicts = Vec::new();
+        if let Some(path) = path {
+            dicts.push(StarDict::new(path.into())?);
+        } else {
+            for d in get_dicts_entries()? {
+                dicts.push(StarDict::new(d.path())?);
+            }
         }
-    }
 
-    for d in &dicts {
-        match d.exact_lookup(word) {
-            Some(entry) => {
-                println!("{}\n{}", entry.word, entry.trans);
-                return Ok(());
-           }
-            _ => println!("{:?}", Error::WordNotFound(d.dict_name().to_owned())),
-        }
-    }
-
-    if local_first {
-        if let Err(_) = lookup_online(word) {
-            println!("{:?}", Error::WordNotFound("online dictionary".to_owned()));
-        }
-    }
-
-    if !exact {
-        println!("Fuzzy search enabled");
-        if let Some(selection) = Select::with_theme(&ColorfulTheme::default())
-            .items(&dicts.iter().map(|x| x.dict_name()).collect::<Vec<&str>>())
-            .default(0)
-            .interact_on_opt(&Term::stderr())?
-        {
-            if let Some(entries) = dicts[selection].fuzzy_lookup(word) {
-                if let Some(sub_selection) = Select::with_theme(&ColorfulTheme::default())
-                    .items(&entries.iter().map(|x| x.word).collect::<Vec<&str>>())
-                    .default(0)
-                    .interact_on_opt(&Term::stderr())?
-                {
-                    let entry = &entries[sub_selection];
+        let mut found = false;
+        for d in &dicts {
+            match d.exact_lookup(word) {
+                Some(entry) => {
                     println!("{}\n{}", entry.word, entry.trans);
-                    return Ok(())
+                    found = true;
+                    break;
+                }
+                _ => println!("{:?}", Error::WordNotFound(d.dict_name().to_owned())),
+            }
+        }
+
+        if !found && local_first {
+            if let Err(_) = lookup_online(word) {
+                println!("{:?}", Error::WordNotFound("online dictionary".to_owned()));
+            }
+        }
+
+        if !found && !exact {
+            println!("Fuzzy search enabled");
+            if let Some(selection) = Select::with_theme(&ColorfulTheme::default())
+                .items(&dicts.iter().map(|x| x.dict_name()).collect::<Vec<&str>>())
+                .default(0)
+                .interact_on_opt(&Term::stderr())?
+            {
+                if let Some(entries) = dicts[selection].fuzzy_lookup(word) {
+                    if let Some(sub_selection) = Select::with_theme(&ColorfulTheme::default())
+                        .items(&entries.iter().map(|x| x.word).collect::<Vec<&str>>())
+                        .default(0)
+                        .interact_on_opt(&Term::stderr())?
+                    {
+                        let entry = &entries[sub_selection];
+                        println!("{}\n{}", entry.word, entry.trans);
+                    }
                 }
             }
         }
     }
 
-    Err(Error::WordNotFound("All Dictionaries".to_string()))
+    if read_aloud {
+        dict::read_aloud(word)?;
+    }
+
+    Ok(())
 }
 
-pub fn repl(online: bool, local_first: bool, exact: bool, path: &Option<String>) -> Result<()> {
+pub fn repl(
+    online: bool,
+    local_first: bool,
+    exact: bool,
+    path: &Option<String>,
+    read_aloud: bool,
+) -> Result<()> {
     let mut rl = Editor::<()>::new().map_err(|_| Error::ReadlineError)?;
     loop {
         let readline = rl.readline(">> ");
         match readline {
             Ok(word) => {
                 rl.add_history_entry(&word);
-                if let Err(e) = query(online, local_first, exact, word, path) {
+                if let Err(e) = query(online, local_first, exact, word, path, read_aloud) {
                     println!("{:?}", e);
                 }
             }

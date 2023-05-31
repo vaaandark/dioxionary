@@ -1,6 +1,6 @@
 [package]
 name = "rmall"
-version = "0.1.4"
+version = "0.1.5"
 edition = "2021"
 authors = ["vaaandark <vaaandark@gmail.com>"]
 description = "Remember all words in terminal!"
@@ -9,7 +9,7 @@ license = "GPL2"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-reqwest = "0.11.11"
+reqwest = { version = "0.11.11", features = ["blocking"] }
 hyper = "0.14.20"
 scraper = "0.13.0"
 dirs = "4.0.0"
@@ -24,3 +24,4 @@ flate2 = { version = "1.0.25", features = ["zlib"] }
 rustyline = "10.1.1"
 dialoguer = "0.10.4"
 tokio = { version = "1.28.2", features = ["rt"] }
+rodio = "0.17.1"
