@@ -1,7 +1,8 @@
 pub use clap::{Args, Parser};
+use clap_complete::Shell;
 
 #[derive(Parser, Debug)]
-#[command(author, version, about, long_about = None, after_help =
+#[command(author, version, about, long_about = None, bin_name = "rmall", after_help =
 "Examples:
   When no subcommand is specified, the default is 'lookup'.
   you can list all records:
@@ -39,6 +40,10 @@ pub struct Cli {
     /// Read aloud
     #[arg(short, long)]
     pub read_aloud: bool,
+
+    /// generate shell completion scripts
+    #[arg(short, long, value_enum, value_name = "SHELL")]
+    pub completions: Option<Shell>,
 
     pub word: Option<String>,
 }
