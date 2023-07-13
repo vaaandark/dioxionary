@@ -17,15 +17,21 @@ Remember all words in terminal **offline** / **online**!
 cargo install --git https://github.com/vaaandark/rmall
 ```
 
-### Prebuilt binary
-
-You can download binaries at [Github Release](https://github.com/vaaandark/rmall/releases)
-
 ## Usage
 
 ![demo](images/demo.svg)
 
 > Characters are slightly misplaced after asciinema recording and svg-term conversion
+
+### Enable argument completion
+
+```console
+$ eval "$(rmall -c bash)" # for bash
+$ eval "$(rmall -c zsh)"  # for zsh
+$ eval "$(rmall -c fish)" # for fish
+```
+
+You can write the above commands directly into the configuration file of your shell.
 
 ### Look up word meaning
 

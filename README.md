@@ -17,15 +17,21 @@
 cargo install --git https://github.com/vaaandark/rmall
 ```
 
-### 下载预构建二进制
-
-推荐在 [Github Release](https://github.com/vaaandark/rmall/releases) 下载预构建二进制文件。
-
 ## 使用
 
 ![demo](images/demo.svg)
 
 > asciinema 录制配合 svg-term 转换后字符略有错位现象
+
+### 启用参数补全
+
+```console
+$ eval "$(rmall -c bash)" # for bash
+$ eval "$(rmall -c zsh)"  # for zsh
+$ eval "$(rmall -c fish)" # for fish
+```
+
+可以将上述命令直接写到 shell 的配置文件中。
 
 ### 查询单词
 
