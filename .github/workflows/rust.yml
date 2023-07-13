@@ -13,6 +13,7 @@ jobs:
           profile: minimal
           toolchain: stable
           override: true
+      - run: sudo apt-get install libssl-dev libsqlite3-dev libasound2-dev
       - uses: actions-rs/cargo@v1
         with:
           command: check
@@ -61,6 +62,7 @@ jobs:
           toolchain: stable
           override: true
           components: clippy
+      - run: sudo apt-get install libssl-dev libsqlite3-dev libasound2-dev
       - uses: actions-rs/cargo@v1
         with:
           command: clippy
