@@ -21,11 +21,11 @@ fn lookup_online(word: &str) -> Result<()> {
 }
 
 fn get_dicts_entries() -> Result<Vec<DirEntry>> {
-    let mut rmall_dir = dirs::config_dir();
-    let rmall_dir = rmall_dir
+    let mut dioxionary_dir = dirs::config_dir();
+    let dioxionary_dir = dioxionary_dir
         .as_mut()
         .map(|dir| {
-            dir.push("rmall");
+            dir.push("dioxionary");
             dir
         })
         .filter(|dir| dir.is_dir());
@@ -40,7 +40,7 @@ fn get_dicts_entries() -> Result<Vec<DirEntry>> {
         })
         .filter(|dir| dir.is_dir());
 
-    let path = match (&rmall_dir, &stardict_compatible_dir) {
+    let path = match (&dioxionary_dir, &stardict_compatible_dir) {
         (Some(dir), _) => dir,
         (None, Some(dir)) => dir,
         (None, None) => return Err(Error::ConfigDirNotFound),

@@ -1,5 +1,5 @@
 use clap::CommandFactory;
-use rmall::{
+use dioxionary::{
     cli::{Action, Cli, Parser},
     error::Result,
     history, list_dicts, query, repl,
@@ -9,7 +9,7 @@ fn main() -> Result<()> {
     let cli: Cli = Cli::parse();
 
     if let Some(shell) = cli.completions {
-        clap_complete::generate(shell, &mut Cli::command(), "rmall", &mut std::io::stdout());
+        clap_complete::generate(shell, &mut Cli::command(), "dioxionary", &mut std::io::stdout());
         std::process::exit(0);
     }
 

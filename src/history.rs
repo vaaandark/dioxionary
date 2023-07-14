@@ -13,11 +13,11 @@ static ALLOWED_TYPES: [&str; 8] = [
 #[allow(unused)]
 pub fn check_cache() -> Result<PathBuf> {
     let mut path = cache_dir().ok_or(Error::CacheDirNotFound)?;
-    path.push("rmall");
+    path.push("dioxionary");
     if !path.exists() {
         create_dir(&path)?;
     }
-    path.push("rmall.db");
+    path.push("dioxionary.db");
     Ok(path)
 }
 

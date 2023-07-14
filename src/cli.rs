@@ -2,15 +2,15 @@ pub use clap::{Args, Parser};
 use clap_complete::Shell;
 
 #[derive(Parser, Debug)]
-#[command(author, version, about, long_about = None, bin_name = "rmall", after_help =
+#[command(author, version, about, long_about = None, bin_name = "dioxionary", after_help =
 "Examples:
   When no subcommand is specified, the default is 'lookup'.
   you can list all records:
-    rmall list
+    dioxionary list
   you can also list the following types:
     'CET4', 'CET6', 'CET8', 'TOEFL', 'IELTS', 'GMAT', 'GRE', 'SAT'
   you can count all records:
-    rmall count
+    dioxionary count
 "
 )]
 pub struct Cli {

@@ -1,13 +1,13 @@
 [package]
-name = "rmall"
+name = "dioxionary"
 version = "0.1.6"
 edition = "2021"
 authors = ["vaaandark <vaaandark@gmail.com>"]
 description = "Remember all words in terminal!"
-license = "GPL2"
-homepage = "https://github.com/vaaandark/rmall"
-documentation = "https://github.com/vaaandark/rmall/blob/master/README.md"
-repository = "https://github.com/vaaandark/rmall"
+license = "GPL-2.0"
+homepage = "https://github.com/vaaandark/dioxionary"
+documentation = "https://github.com/vaaandark/dioxionary/blob/master/README.md"
+repository = "https://github.com/vaaandark/dioxionary"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 

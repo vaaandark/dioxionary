@@ -1,4 +1,4 @@
-# rmall
+# dioxionary
 
 [简体中文](README.md) | [English](README-en.md)
 
@@ -14,7 +14,7 @@
 ### 自行编译
 
 ```console
-cargo install --git https://github.com/vaaandark/rmall
+cargo install --git https://github.com/vaaandark/dioxionary
 ```
 
 ## 使用
@@ -26,9 +26,9 @@ cargo install --git https://github.com/vaaandark/rmall
 ### 启用参数补全
 
 ```console
-$ eval "$(rmall -c bash)" # for bash
-$ eval "$(rmall -c zsh)"  # for zsh
-$ eval "$(rmall -c fish)" # for fish
+$ eval "$(dioxionary -c bash)" # for bash
+$ eval "$(dioxionary -c zsh)"  # for zsh
+$ eval "$(dioxionary -c fish)" # for fish
 ```
 
 可以将上述命令直接写到 shell 的配置文件中。
@@ -36,13 +36,13 @@ $ eval "$(rmall -c fish)" # for fish
 ### 查询单词
 
 ```console
-$ rmall lookup [OPTIONS] [WORD]
+$ dioxionary lookup [OPTIONS] [WORD]
 ```
 
 子命令 `lookup` 可以省略：
 
 ```console
-$ rmall [OPTIONS] [WORD]
+$ dioxionary [OPTIONS] [WORD]
 ```
 
 当参数中没有待查单词时，将进入交互模式，可以无限查询，直至按下 `Ctrl+D` 。
@@ -52,25 +52,25 @@ $ rmall [OPTIONS] [WORD]
 使用 `-e` 或者 `--exact-search` 可以关闭模糊搜索。也可以通过在单词前添加 `/` 或者 `|` 来打开或关闭模糊搜索，在单词前添加 `@` 使用网络词典。
 
 ```console
-$ rmall /terraria   # 模糊搜索
-$ rmall '|terraria' # 非模糊搜索，注意使用引号
-$ rmall @terraria   # 使用网络词典
+$ dioxionary /terraria   # 模糊搜索
+$ dioxionary '|terraria' # 非模糊搜索，注意使用引号
+$ dioxionary @terraria   # 使用网络词典
 ```
 
 默认使用本地词典，本地词典目录应当存放在：
 
 |Platform | Value                                             | Example                                        |
 | ------- | ------------------------------------------------- | ---------------------------------------------- |
-| Linux   | `$XDG_CONFIG_HOME/rmall` or `$HOME`/.config/rmall | /home/alice/.config/rmall                      |
-| macOS   | `$HOME`/Library/Application Support/rmall         | /Users/Alice/Library/Application Support/rmall |
-| Windows | `{FOLDERID_RoamingAppData}`/rmall                 | C:\Users\Alice\AppData\Roaming/rmall           |
+| Linux   | `$XDG_CONFIG_HOME/dioxionary` or `$HOME`/.config/dioxionary | /home/alice/.config/dioxionary                      |
+| macOS   | `$HOME`/Library/Application Support/dioxionary         | /Users/Alice/Library/Application Support/dioxionary |
+| Windows | `{FOLDERID_RoamingAppData}`/dioxionary                 | C:\Users\Alice\AppData\Roaming/dioxionary           |
 
 > 只支持 stardict 的词典格式
 
 > 可以在 http://download.huzheng.org/ 下载 stardict 格式词典
 
 ```plain
-~/.config/rmall
+~/.config/dioxionary
 ├── 00-cdict-gb
 ├── 01-kdic-computer-gb
 ├── 02-langdao-ec-gb
@@ -87,12 +87,12 @@ $ rmall @terraria   # 使用网络词典
 使用 `-x` 选项会使用在线词典查询：
 
 ```console
-$ rmall -x <DICTDIR> <WORD>
+$ dioxionary -x <DICTDIR> <WORD>
 ```
 
 可以使用 `-l` 或 `--local` 选项指定词典文件路径。
 
-使用 `-L` 或 `--local-first` 选项则会在本地查询失败后使用网络词典。推荐在 shell 配置文件中加入 `alias rl='rmall -l'`。
+使用 `-L` 或 `--local-first` 选项则会在本地查询失败后使用网络词典。推荐在 shell 配置文件中加入 `alias rl='dioxionary -l'`。
 
 ### 多字典支持
 
@@ -103,7 +103,7 @@ $ rmall -x <DICTDIR> <WORD>
 > 注意：只有在线查词时会查得并记录单词类型
 
 ```console
-$ rmall list [OPTIONS] [TYPE]
+$ dioxionary list [OPTIONS] [TYPE]
 ```
 
 以下为支持的单词类型：
@@ -118,5 +118,5 @@ CET4 | CET6 | CET8 | TOEFL | IELTS | GMAT | GRE | SAT
 统计查询过的各类单词的个数：
 
 ```console
-$ rmall count
+$ dioxionary count
 ```

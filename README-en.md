@@ -1,8 +1,8 @@
-# rmall
+# dioxionary
 
 [简体中文](README.md) | [English](README-en.md)
 
-Remember all words in terminal **offline** / **online**!
+Look up and memorize all words in terminal **offline** / **online**!
 
 ## Prerequisites
 
@@ -14,7 +14,7 @@ Remember all words in terminal **offline** / **online**!
 ### Compile from source
 
 ```console
-cargo install --git https://github.com/vaaandark/rmall
+cargo install --git https://github.com/vaaandark/dioxionary
 ```
 
 ## Usage
@@ -26,9 +26,9 @@ cargo install --git https://github.com/vaaandark/rmall
 ### Enable argument completion
 
 ```console
-$ eval "$(rmall -c bash)" # for bash
-$ eval "$(rmall -c zsh)"  # for zsh
-$ eval "$(rmall -c fish)" # for fish
+$ eval "$(dioxionary -c bash)" # for bash
+$ eval "$(dioxionary -c zsh)"  # for zsh
+$ eval "$(dioxionary -c fish)" # for fish
 ```
 
 You can write the above commands directly into the configuration file of your shell.
@@ -36,13 +36,13 @@ You can write the above commands directly into the configuration file of your sh
 ### Look up word meaning
 
 ```console
-$ rmall lookup [OPTIONS] [WORD]
+$ dioxionary lookup [OPTIONS] [WORD]
 ```
 
 The subcommand `lookup` can be omitted:
 
 ```console
-$ rmall [OPTIONS] [WORD]
+$ dioxionary [OPTIONS] [WORD]
 ```
 
 When there is no word to be searched in the parameter, it will enter the interactive mode, and can search infinitely until `Ctrl+D` is pressed.
@@ -52,25 +52,25 @@ Supports and uses fuzzy search by default. When no word is found in the dictiona
 Use `-e` or `--exact-search` to turn off fuzzy search. You can also turn fuzzy search on or off by prefixing a word with `/` or `|`, and use web dictionaries with `@` before a word.
 
 ```console
-$ rmall /terraria   # Fuzzy search
-$ rmall '|terraria' # Non-fuzzy search, pay attention to use quotation marks
-$ rmall @terraria   # Online search
+$ dioxionary /terraria   # Fuzzy search
+$ dioxionary '|terraria' # Non-fuzzy search, pay attention to use quotation marks
+$ dioxionary @terraria   # Online search
 ```
 
 The local dictionary is used by default, and the local dictionary directory should be stored in:
 
 |Platform | Value                                             | Example                                        |
 | ------- | ------------------------------------------------- | ---------------------------------------------- |
-| Linux   | `$XDG_CONFIG_HOME/rmall` or `$HOME`/.config/rmall | /home/alice/.config/rmall                      |
-| macOS   | `$HOME`/Library/Application Support/rmall         | /Users/Alice/Library/Application Support/rmall |
-| Windows | `{FOLDERID_RoamingAppData}`/rmall                 | C:\Users\Alice\AppData\Roaming/rmall           |
+| Linux   | `$XDG_CONFIG_HOME/dioxionary` or `$HOME`/.config/dioxionary | /home/alice/.config/dioxionary                      |
+| macOS   | `$HOME`/Library/Application Support/dioxionary         | /Users/Alice/Library/Application Support/dioxionary |
+| Windows | `{FOLDERID_RoamingAppData}`/dioxionary                 | C:\Users\Alice\AppData\Roaming/dioxionary           |
 
 > Only stardict dictionary format is supported
 
 > You can download dictionaries in stardict format at http://download.huzheng.org/
 
 ```plain
-~/.config/rmall
+~/.config/dioxionary
 ├── 00-cdict-gb
 ├── 01-kdic-computer-gb
 ├── 02-langdao-ec-gb
@@ -87,12 +87,12 @@ The local dictionary is used by default, and the local dictionary directory shou
 Using the `-x` option will use an online dictionary lookup:
 
 ```console
-$ rmall -x <DICTDIR> <WORD>
+$ dioxionary -x <DICTDIR> <WORD>
 ```
 
 The dictionary file path can be specified with the `-l` or `--local` option.
 
-Use the `-L` or `--local-first` option to use the network dictionary after a local lookup fails. It is recommended to add `alias rl='rmall -l'` in the shell configuration file.
+Use the `-L` or `--local-first` option to use the network dictionary after a local lookup fails. It is recommended to add `alias rl='dioxionary -l'` in the shell configuration file.
 
 ### Multiple dictionary support
 
@@ -103,7 +103,7 @@ As in the above example, the dictionary directories can be named in the format o
 > Note: Only the word type will be searched and recorded when searching online
 
 ```console
-$ rmall list [OPTIONS] [TYPE]
+$ dioxionary list [OPTIONS] [TYPE]
 ```
 
 The following word types are supported:
@@ -118,5 +118,5 @@ List all records when type is missing.
 Count the number of various words that have been queried:
 
 ```console
-$ rmall count
+$ dioxionary count
 ```
