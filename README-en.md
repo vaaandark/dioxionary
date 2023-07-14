@@ -14,7 +14,7 @@ Look up and memorize all words in terminal **offline** / **online**!
 ### Compile from source
 
 ```console
-cargo install --git https://github.com/vaaandark/dioxionary
+cargo install dioxionary
 ```
 
 ## Usage

@@ -14,7 +14,7 @@
 ### 自行编译
 
 ```console
-cargo install --git https://github.com/vaaandark/dioxionary
+cargo install dioxionary
 ```
 
 ## 使用
