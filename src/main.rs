@@ -9,7 +9,12 @@ fn main() -> Result<()> {
     let cli: Cli = Cli::parse();
 
     if let Some(shell) = cli.completions {
-        clap_complete::generate(shell, &mut Cli::command(), "dioxionary", &mut std::io::stdout());
+        clap_complete::generate(
+            shell,
+            &mut Cli::command(),
+            "dioxionary",
+            &mut std::io::stdout(),
+        );
         std::process::exit(0);
     }
 
