@@ -10,6 +10,15 @@ repository = "https://github.com/vaaandark/dioxionary"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
+[[bin]]
+name = "dioxionary"
+path = "src/main.rs"
+
+[lib]
+name = "dioxionary"
+path = "src/lib.rs"
+crate-type = ["lib"]
+
 [dependencies]
 reqwest = { version = "0.11.11", features = ["blocking"] }
 hyper = "0.14.20"
