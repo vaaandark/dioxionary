@@ -121,8 +121,12 @@ pub fn query(
             }
         }
 
-        if !found && local_first && lookup_online(word).is_err() {
-            println!("{:?}", Error::WordNotFound("online dictionary".to_owned()));
+        if !found && local_first {
+            if lookup_online(word).is_ok() {
+                found = true;
+            } else {
+                println!("{:?}", Error::WordNotFound("online dictionary".to_owned()));
+            }
         }
 
         if !found && !exact {
