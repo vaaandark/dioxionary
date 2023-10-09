@@ -4,7 +4,7 @@ use clap_complete::Shell;
 
 /// Dioxionary command line parameters.
 #[derive(Parser, Debug)]
-#[command(author, version, about, long_about = None, bin_name = "dioxionary", after_help =
+#[command(author, about, long_about = None, bin_name = "dioxionary", after_help =
 "Examples:
   When no subcommand is specified, the default is 'lookup'.
   you can list all records:
@@ -15,6 +15,10 @@ use clap_complete::Shell;
     dioxionary count
   you can list all dictionaries:
     dioxionary dicts
+  you can review like anki:
+    dioxionary review
+
+  https://github.com/lengyijun/dioxionary/tree/spaced_repetition_pr
 "
 )]
 pub struct Cli {
@@ -30,7 +34,7 @@ pub struct Cli {
     #[arg(short = 'x', long, default_value_t = false)]
     pub online: bool,
 
-    /// Try offline dictionary first, then the online.
+    /// try offline dictionary first, then the online
     #[arg(short = 'L', long, default_value_t = true)]
     pub local_first: bool,
 
@@ -38,8 +42,12 @@ pub struct Cli {
     #[arg(short, long, default_value_t = false)]
     pub exact_search: bool,
 
-    /// Play word pronunciation.
-    #[arg(short, long, default_value_t = false)]
+    /// for use in scripts
+    #[arg(short, long, default_value_t = true)]
+    pub non_interactive: bool,
+
+    /// Read aloud
+    #[arg(short, long)]
     pub read_aloud: bool,
 
     /// Generate shell completion scripts.
@@ -48,6 +56,9 @@ pub struct Cli {
 
     /// The word being looked up.
     pub word: Option<Vec<String>>,
+
+    #[arg(long, default_value_t = false)]
+    pub version: bool,
 }
 
 /// Dioxionary subcommands.
@@ -64,6 +75,9 @@ pub enum Action {
 
     /// Display list of available dictionaries and exit.
     Dicts,
+
+    /// Review by SM2 algorithm
+    Review,
 }
 
 /// Subcommand line parameters for looking up words.
