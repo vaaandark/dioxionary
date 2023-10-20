@@ -1,3 +1,4 @@
+//! History query and addition using [sqlite](https://sqlite.org/index.html).
 use crate::error::{Error, Result};
 use chrono::Utc;
 use dirs::cache_dir;
@@ -6,10 +7,11 @@ use rusqlite::Connection;
 use std::fs::create_dir;
 use std::path::PathBuf;
 
-static ALLOWED_TYPES: [&str; 7] = ["CET4", "CET6", "TOEFL", "IELTS", "GMAT", "GRE", "SAT"];
+/// Allowed diffculty level types of a word.
+pub static ALLOWED_TYPES: [&str; 7] = ["CET4", "CET6", "TOEFL", "IELTS", "GMAT", "GRE", "SAT"];
 
-#[allow(unused)]
-pub fn check_cache() -> Result<PathBuf> {
+/// Check and generate cache directory path.
+fn check_cache() -> Result<PathBuf> {
     let mut path = cache_dir().ok_or(Error::CacheDirNotFound)?;
     path.push("dioxionary");
     if !path.exists() {
@@ -19,7 +21,7 @@ pub fn check_cache() -> Result<PathBuf> {
     Ok(path)
 }
 
-#[allow(unused)]
+/// Add a looked up word to history.
 pub fn add_history(word: &str, types: &Option<Vec<String>>) -> Result<()> {
     let date = Utc::now().timestamp();
 
@@ -50,7 +52,7 @@ pub fn add_history(word: &str, types: &Option<Vec<String>>) -> Result<()> {
         types.iter().for_each(|x| {
             if ALLOWED_TYPES.contains(&x.as_str()) {
                 let sql = format!("UPDATE HISTORY SET {} = 1 WHERE WORD = '{}'", x, word);
-                conn.execute(sql.as_str(), ());
+                conn.execute(sql.as_str(), ()).unwrap();
             }
         })
     }
@@ -58,7 +60,16 @@ pub fn add_history(word: &str, types: &Option<Vec<String>>) -> Result<()> {
     Ok(())
 }
 
-#[allow(unused)]
+/// List sorted or not history of a word type or all types.
+///
+/// The output will be like:
+/// ```txt
+/// +------+------+-------+-------+------+-----+-----+
+/// | CET4 | CET6 | TOEFL | IELTS | GMAT | GRE | SAT |
+/// +------+------+-------+-------+------+-----+-----+
+/// | 220  | 305  | 207   | 203   | 142  | 242 | 126 |
+/// +------+------+-------+-------+------+-----+-----+
+/// ```
 pub fn list_history(type_: Option<String>, sort: bool, table: bool, column: usize) -> Result<()> {
     let path = check_cache()?;
 
@@ -96,6 +107,7 @@ pub fn list_history(type_: Option<String>, sort: bool, table: bool, column: usiz
     Ok(())
 }
 
+/// Count the history.
 pub fn count_history() -> Result<()> {
     let path = check_cache()?;
 

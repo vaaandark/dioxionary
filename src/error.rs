@@ -1,74 +1,77 @@
+//! Error handling of dioxionary.
 use thiserror::Error;
 
+/// Dioxionary-related errors.
 #[derive(Debug, Error)]
 pub enum Error {
-    /// wrong arguments
+    /// Wrong arguments.
     #[error("transparent")]
     ReadlineError,
 
-    /// The word is not found
+    /// The word is not found.
     #[error("transparent")]
     WordNotFound(String),
 
-    /// Something wrong with sqlite or your sql statements
+    /// Something wrong with sqlite or your sql statements.
     #[error("transparent")]
     Sqlite(#[from] rusqlite::Error),
 
-    /// Cache directory is not found
+    /// Cache directory is not found.
     #[error("transparent")]
     CacheDirNotFound,
 
-    /// Config directory is not found
+    /// Config directory is not found.
     #[error("transparent")]
     ConfigDirNotFound,
 
-    /// Something wrong with creating directory
+    /// Something wrong with creating directory.
     #[error("transparent")]
     CannotCreateDir(#[from] std::io::Error),
 
-    /// Something wrong with network
+    /// Something wrong with network.
     #[error("transparent")]
     NetworkError(#[from] reqwest::Error),
 
-    /// Something wrong with html parsing
+    /// Something wrong with html parsing.
     #[error("transparent")]
     HtmlParsingError,
 
-    /// something wrong with your path
+    /// Something wrong with your path.
     #[error("transparent")]
     PathError,
 
-    /// cannot open ifo file
+    /// Cannot open ifo file.
     #[error("transparent")]
     CannotOpenIfoFile,
 
-    /// something wrong with your ifo file
+    /// Something wrong with your ifo file.
     #[error("transparent")]
     IfoFileParsingError,
 
-    /// wrong dict version: only suppurt 2.8.2 and 3.0.0
+    /// Wrong dict version: only suppurt 2.8.2 and 3.0.0.
     #[error("transparent")]
     VersionError,
 
-    /// cannot open dict file
+    /// Cannot open dict file.
     #[error("transparent")]
     CannotOpenDictFile,
 
-    /// something wrong with your dict file directory
+    /// Something wrong with your dict file directory.
     #[error("transparent")]
     StarDictDirError(String),
 
-    /// something wrong with your dict file
+    /// Something wrong with your dict file.
     #[error("transparent")]
     DictFileError,
 
-    /// cannot open idx file
+    /// Cannot open idx file.
     #[error("transparent")]
     CannotOpenIdxFile,
 
-    /// something wrong with your idx file
+    /// Something wrong with your idx file.
     #[error("transparent")]
     IdxFileParsingError,
 }
 
+/// Return type of most dixionary functions.
 pub type Result<T> = std::result::Result<T, Error>;

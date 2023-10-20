@@ -1,6 +1,8 @@
+//! Dioxionary command line parameters.
 pub use clap::{Args, Parser};
 use clap_complete::Shell;
 
+/// Dioxionary command line parameters.
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None, bin_name = "dioxionary", after_help =
 "Examples:
@@ -16,89 +18,96 @@ use clap_complete::Shell;
 "
 )]
 pub struct Cli {
+    /// Dioxionary subcommands.
     #[command(subcommand)]
     pub action: Option<Action>,
 
-    /// specify local dictionary
+    /// Specify local dictionary.
     #[arg(short, long)]
     pub local: Option<String>,
 
-    /// use online dictionary
-    #[arg(short = 'x', long, default_value_t = true)]
+    /// Use online dictionary.
+    #[arg(short = 'x', long, default_value_t = false)]
     pub online: bool,
 
-    /// try offline dictionary first, then the online
+    /// Try offline dictionary first, then the online.
     #[arg(short = 'L', long, default_value_t = true)]
     pub local_first: bool,
 
-    /// disable fuzzy search, only use exact search, conflict with `-x`
+    /// Disable fuzzy search, only use exact search, conflict with `-x`.
     #[arg(short, long, default_value_t = false)]
     pub exact_search: bool,
 
-    /// Read aloud
+    /// Play word pronunciation.
     #[arg(short, long, default_value_t = false)]
     pub read_aloud: bool,
 
-    /// generate shell completion scripts
+    /// Generate shell completion scripts.
     #[arg(short, long, value_enum, value_name = "SHELL")]
     pub completions: Option<Shell>,
 
+    /// The word being looked up.
     pub word: Option<String>,
 }
 
+/// Dioxionary subcommands.
 #[derive(clap::Subcommand, Debug)]
 pub enum Action {
-    /// lookup the following word, default offline dictionary
+    /// Lookup the following word, default offline dictionary.
     Lookup(Lookup),
 
-    /// list the specific types of records
+    /// List the specific types of records.
     List(List),
 
-    /// count the number of each type
+    /// Count the number of each type.
     Count,
 
-    /// display list of available dictionaries and exit
+    /// Display list of available dictionaries and exit.
     Dicts,
 }
 
+/// Subcommand line parameters for looking up words.
 #[derive(Args, Debug)]
 pub struct Lookup {
-    /// specify local dictionary
+    /// Specify local dictionary.
     #[arg(short, long)]
     pub local: Option<String>,
 
-    /// use online dictionary
-    #[arg(short = 'x', long, default_value_t = true)]
+    /// Use online dictionary.
+    #[arg(short = 'x', long, default_value_t = false)]
     pub online: bool,
 
-    /// try offline dictionary first, then the online
+    /// Try offline dictionary first, then the online.
     #[arg(short = 'L', long, default_value_t = true)]
     pub local_first: bool,
 
-    /// disable fuzzy search, only use exact search, conflict with `-x`
+    /// Disable fuzzy search, only use exact search, conflict with `-x`.
     #[arg(short, long, default_value_t = false)]
     pub exact_search: bool,
 
-    /// Read aloud
+    /// Play word pronunciation.
     #[arg(short, long, default_value_t = false)]
     pub read_aloud: bool,
 
+    /// The word being looked up.
     pub word: Option<String>,
 }
 
+/// Subcommand line parameters for listing history.
 #[derive(Args, Debug)]
 pub struct List {
-    /// sort lexicographically
+    /// Sort lexicographically.
     #[arg(short, long, default_value_t = false)]
     pub sort: bool,
 
-    /// output to a table
+    /// Output to a table.
     #[arg(short, long, default_value_t = false)]
     pub table: bool,
 
-    /// the number of columns in the table
+    /// The number of columns in the table.
     #[arg(short, long, default_value_t = 5, requires("table"))]
     pub column: usize,
 
+    /// The difficulty level of the word.
     pub type_: Option<String>,
 }

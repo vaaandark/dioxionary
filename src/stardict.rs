@@ -1,3 +1,4 @@
+//! Look up words form the offline stardicts.
 use crate::error::{Error, Result};
 use eio::FromBytes;
 use flate2::read::GzDecoder;
@@ -7,6 +8,7 @@ use std::fs::{read, File};
 use std::io::{prelude::*, BufReader};
 use std::path::PathBuf;
 
+/// The stardict to be looked up.
 #[allow(unused)]
 pub struct StarDict {
     ifo: Ifo,
@@ -14,6 +16,7 @@ pub struct StarDict {
     dict: Dict,
 }
 
+/// A word entry of the stardict.
 pub struct Entry<'a> {
     pub word: &'a str,
     pub trans: &'a str,
@@ -21,6 +24,7 @@ pub struct Entry<'a> {
 
 #[allow(unused)]
 impl<'a> StarDict {
+    /// Load stardict from a directory.
     pub fn new(path: PathBuf) -> Result<StarDict> {
         let mut ifo: Option<_> = None;
         let mut idx: Option<_> = None;
@@ -53,6 +57,7 @@ impl<'a> StarDict {
         Ok(StarDict { ifo, idx, dict })
     }
 
+    /// Look up a word with fuzzy searching disabled.
     pub fn exact_lookup(&self, word: &str) -> Option<Entry> {
         if let Ok(pos) = self.idx.items.binary_search_by(|probe| {
             probe
@@ -69,6 +74,7 @@ impl<'a> StarDict {
         }
     }
 
+    /// Calculate word distence for fuzzy searching.
     fn min_edit_distance(pattern: &str, text: &str) -> usize {
         let pattern_chars: Vec<_> = pattern.chars().collect();
         let text_chars: Vec<_> = text.chars().collect();
@@ -95,6 +101,7 @@ impl<'a> StarDict {
         dist[text_chars.len()][pattern_chars.len()]
     }
 
+    /// Look up a word with fuzzy searching enabled.
     pub fn fuzzy_lookup(&self, word: &str) -> Option<Vec<Entry>> {
         let distances: Vec<_> = self
             .idx
@@ -120,10 +127,12 @@ impl<'a> StarDict {
         Some(result)
     }
 
+    /// Get the name of the stardict.
     pub fn dict_name(&'a self) -> &'a str {
         &self.ifo.bookname
     }
 
+    /// Get the number of the words in the stardict.
     pub fn wordcount(&self) -> usize {
         self.ifo.wordcount
     }

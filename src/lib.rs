@@ -1,3 +1,5 @@
+//! StarDict in Rust!
+//! Use offline or online dictionary to look up words and memorize words in the terminal!
 pub mod cli;
 pub mod dict;
 pub mod error;
@@ -11,15 +13,17 @@ use prettytable::{Attr, Cell, Row, Table};
 use rustyline::{error::ReadlineError, Editor};
 use stardict::StarDict;
 
+/// Lookup word from the Internel and add the result to history.
 fn lookup_online(word: &str) -> Result<()> {
-    let word = dict::lookup(word)?;
+    let word = dict::WordItem::lookup(word)?;
     println!("{}", word);
-    if word.is_en() {
-        history::add_history(word.word(), word.types())?;
+    if word.is_en {
+        history::add_history(&word.word, &word.types)?;
     }
     Ok(())
 }
 
+/// Get the entries of the stardicts.
 fn get_dicts_entries() -> Result<Vec<DirEntry>> {
     let mut dioxionary_dir = dirs::config_dir();
     let dioxionary_dir = dioxionary_dir
@@ -57,6 +61,20 @@ fn get_dicts_entries() -> Result<Vec<DirEntry>> {
     Ok(dicts)
 }
 
+/// Look up a word with many flags.
+///
+/// # Params
+/// - `online`: use online dictionary?
+/// - `local_first`: Try offline dictionary first, then the online?
+/// - `exact`: disable fuzzy searching?
+/// - `word`: the word being looked up.
+/// - `path`: the path of the stardict directory.
+/// - `read_aloud`: play word pronunciation?
+///
+/// ## Word prefix
+/// - `/terraria`: enable fuzzy searching.
+/// - `|terraria`: disable fuzzy searching.
+/// - `@terraria`: use online dictionary.
 pub fn query(
     online: bool,
     local_first: bool,
@@ -157,6 +175,7 @@ pub fn query(
     Ok(())
 }
 
+/// Look up a word with many flags interactively using [`query`].
 pub fn repl(
     online: bool,
     local_first: bool,
@@ -181,6 +200,7 @@ pub fn repl(
     }
 }
 
+/// List stardicts in the dioxionary config path.
 pub fn list_dicts() -> Result<()> {
     let mut table: Table = Table::new();
     table.add_row(Row::new(vec![

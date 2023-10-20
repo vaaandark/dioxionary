@@ -1,3 +1,4 @@
+//! Look up words from the Internet.
 use crate::error::{Error, Result};
 use itertools::EitherOrBoth::{Both, Left, Right};
 use itertools::Itertools;
@@ -7,16 +8,19 @@ use scraper::{Html, Selector};
 use std::fmt;
 use std::io::Cursor;
 
+/// Generate url for looking up.
 fn gen_url(word: &str) -> String {
     format!("https://www.youdao.com/result?word={}&lang=en", word)
 }
 
+/// Is an English word?
 fn is_enword(word: &str) -> bool {
     word.as_bytes()
         .iter()
         .all(|x| x.is_ascii_alphabetic() || x.is_ascii_whitespace())
 }
 
+/// Get web dictionary html by word.
 async fn get_html(word: &str) -> Result<Html> {
     static APP_USER_AGENT: &str = "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/106.0.0.0 Mobile Safari/537.36";
     let client = reqwest::Client::builder()
@@ -28,6 +32,7 @@ async fn get_html(word: &str) -> Result<Html> {
     Ok(Html::parse_document(&body))
 }
 
+/// Lookup words by Chinese meaning.
 fn zh2en(html: &Html) -> Result<String> {
     let mut res = String::new();
     let trans = Selector::parse("ul.basic").map_err(|_| Error::HtmlParsingError)?;
@@ -40,6 +45,7 @@ fn zh2en(html: &Html) -> Result<String> {
     Ok(res)
 }
 
+/// Lookup words by English word.
 fn en2zh(html: &Html) -> Result<String> {
     let mut res = String::new();
     let phonetic = Selector::parse(".per-phone").map_err(|_| Error::HtmlParsingError)?;
@@ -78,6 +84,7 @@ fn en2zh(html: &Html) -> Result<String> {
     Ok(res)
 }
 
+/// Get the diffculty level of the word from html.
 fn get_exam_type(html: &Html) -> Result<Vec<String>> {
     let types = Selector::parse(".exam_type-value").map_err(|_| Error::HtmlParsingError)?;
     let mut res: Vec<String> = Vec::new();
@@ -90,35 +97,49 @@ fn get_exam_type(html: &Html) -> Result<Vec<String>> {
     Ok(res)
 }
 
+/// Word item from the web dictionary.
 pub struct WordItem {
-    word: String,
-    is_en: bool,
-    trans: String,
-    types: Option<Vec<String>>,
+    /// The word being looked up.
+    pub word: String,
+    /// Is an English word?
+    pub is_en: bool,
+    /// The meaning or the translation of the word.
+    pub trans: String,
+    /// The diffculty level of the word(can be none or more than one).
+    pub types: Option<Vec<String>>,
 }
 
 impl WordItem {
-    pub fn new(word: String, is_en: bool, trans: String, types: Option<Vec<String>>) -> WordItem {
-        WordItem {
-            word,
-            is_en,
-            trans,
-            types,
-        }
-    }
-    pub fn is_en(&self) -> bool {
-        self.is_en
-    }
-    pub fn word(&self) -> &str {
-        &self.word
-    }
-    #[allow(unused)]
-    pub fn trans(&self) -> &str {
-        &self.trans
-    }
-    #[allow(unused)]
-    pub fn types(&self) -> &Option<Vec<String>> {
-        &self.types
+    /// Build a word item by looking up from the web dictionary.
+    pub fn lookup(word: &str) -> Result<WordItem> {
+        let runtime = tokio::runtime::Builder::new_current_thread()
+            .enable_all()
+            .build()
+            .unwrap();
+
+        runtime.block_on(async {
+            let html = get_html(word).await?;
+            let is_en = is_enword(word);
+            let dirction = if is_en { en2zh } else { zh2en };
+            let trans = dirction(&html)?.trim().to_string();
+            // cannot find the word
+            if trans.is_empty() {
+                Err(Error::WordNotFound("online".to_string()))
+            } else {
+                let types = if is_en {
+                    Some(get_exam_type(&html)?)
+                } else {
+                    None
+                };
+                let word = word.to_owned();
+                Ok(WordItem {
+                    word,
+                    is_en,
+                    trans,
+                    types,
+                })
+            }
+        })
     }
 }
 
@@ -135,31 +156,7 @@ impl fmt::Display for WordItem {
     }
 }
 
-pub fn lookup(word: &str) -> Result<WordItem> {
-    let runtime = tokio::runtime::Builder::new_current_thread()
-        .enable_all()
-        .build()
-        .unwrap();
-
-    runtime.block_on(async {
-        let html = get_html(word).await?;
-        let is_en = is_enword(word);
-        let dirction = if is_en { en2zh } else { zh2en };
-        let trans = dirction(&html)?.trim().to_string();
-        // cannot find the word
-        if trans.is_empty() {
-            Err(Error::WordNotFound("online".to_string()))
-        } else {
-            let types = if is_en {
-                Some(get_exam_type(&html)?)
-            } else {
-                None
-            };
-            Ok(WordItem::new(word.to_string(), is_en, trans, types))
-        }
-    })
-}
-
+/// Play word pronunciation.
 pub fn read_aloud(word: &str) -> Result<()> {
     let (_stream, stream_handle) = OutputStream::try_default().unwrap();
     let url = format!("https://dict.youdao.com/dictvoice?audio={}&type=1", word);

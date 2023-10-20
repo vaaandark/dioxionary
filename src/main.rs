@@ -1,3 +1,5 @@
+//! StarDict in Rust!
+//! Use offline or online dictionary to look up words and memorize words in the terminal!
 use clap::CommandFactory;
 use dioxionary::{
     cli::{Action, Cli, Parser},
