@@ -8,9 +8,11 @@ use clap_complete::Shell;
   you can list all records:
     dioxionary list
   you can also list the following types:
-    'CET4', 'CET6', 'CET8', 'TOEFL', 'IELTS', 'GMAT', 'GRE', 'SAT'
+    'CET4', 'CET6', 'TOEFL', 'IELTS', 'GMAT', 'GRE', 'SAT'
   you can count all records:
     dioxionary count
+  you can list all dictionaries:
+    dioxionary dicts
 "
 )]
 pub struct Cli {
@@ -22,23 +24,19 @@ pub struct Cli {
     pub local: Option<String>,
 
     /// use online dictionary
-    #[arg(short = 'x', long)]
+    #[arg(short = 'x', long, default_value_t = true)]
     pub online: bool,
 
     /// try offline dictionary first, then the online
-    #[arg(short = 'L', long)]
+    #[arg(short = 'L', long, default_value_t = true)]
     pub local_first: bool,
 
     /// disable fuzzy search, only use exact search, conflict with `-x`
-    #[arg(short, long)]
+    #[arg(short, long, default_value_t = false)]
     pub exact_search: bool,
 
-    /// for use in scripts
-    #[arg(short, long)]
-    pub non_interactive: bool,
-
     /// Read aloud
-    #[arg(short, long)]
+    #[arg(short, long, default_value_t = false)]
     pub read_aloud: bool,
 
     /// generate shell completion scripts
@@ -70,23 +68,19 @@ pub struct Lookup {
     pub local: Option<String>,
 
     /// use online dictionary
-    #[arg(short = 'x', long)]
+    #[arg(short = 'x', long, default_value_t = true)]
     pub online: bool,
 
     /// try offline dictionary first, then the online
-    #[arg(short = 'L', long)]
+    #[arg(short = 'L', long, default_value_t = true)]
     pub local_first: bool,
 
     /// disable fuzzy search, only use exact search, conflict with `-x`
-    #[arg(short, long)]
+    #[arg(short, long, default_value_t = false)]
     pub exact_search: bool,
 
-    /// for use in scripts
-    #[arg(short, long)]
-    pub non_interactive: bool,
-
     /// Read aloud
-    #[arg(short, long)]
+    #[arg(short, long, default_value_t = false)]
     pub read_aloud: bool,
 
     pub word: Option<String>,

@@ -23,47 +23,30 @@ fn main() -> Result<()> {
             Action::Count => history::count_history(),
             Action::List(t) => history::list_history(t.type_, t.sort, t.table, t.column),
             Action::Lookup(w) => {
+                let online = w.online;
+                let local_first = w.local_first;
+                let exact = w.exact_search;
+                let path = &w.local;
+                let read_aloud = w.read_aloud;
                 if let Some(word) = w.word {
-                    query(
-                        w.online,
-                        w.local_first,
-                        w.exact_search,
-                        word,
-                        &w.local,
-                        w.read_aloud,
-                    )
-                } else if !w.non_interactive {
-                    repl(
-                        w.online,
-                        w.local_first,
-                        w.exact_search,
-                        &w.local,
-                        w.read_aloud,
-                    )
+                    query(online, local_first, exact, word, path, read_aloud)
                 } else {
-                    Ok(())
+                    repl(online, local_first, exact, path, read_aloud)
                 }
             }
             Action::Dicts => list_dicts(),
         }
-    } else if let Some(word) = cli.word {
-        query(
-            cli.online,
-            cli.local_first,
-            cli.exact_search,
-            word,
-            &cli.local,
-            cli.read_aloud,
-        )
-    } else if !cli.non_interactive {
-        repl(
-            cli.online,
-            cli.local_first,
-            cli.exact_search,
-            &cli.local,
-            cli.read_aloud,
-        )
     } else {
-        Ok(())
+        let online = cli.online;
+        let local_first = cli.local_first;
+        let exact = cli.exact_search;
+        let word = cli.word;
+        let path = &cli.local;
+        let read_aloud = cli.read_aloud;
+        if let Some(word) = word {
+            query(online, local_first, exact, word, path, read_aloud)
+        } else {
+            repl(online, local_first, exact, path, read_aloud)
+        }
     }
 }
