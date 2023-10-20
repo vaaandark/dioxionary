@@ -108,8 +108,8 @@ $ dioxionary list [OPTIONS] [TYPE]
 
 以下为支持的单词类型：
 
-CET4 | CET6 | CET8 | TOEFL | IELTS | GMAT | GRE | SAT
---- | --- | --- | --- | --- | --- | --- | ---
+CET4 | CET6 | TOEFL | IELTS | GMAT | GRE | SAT
+--- | --- | --- | --- | --- | --- | ---
 
 缺少类型时列出所有记录。
 

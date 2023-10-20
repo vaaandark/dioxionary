@@ -108,8 +108,8 @@ $ dioxionary list [OPTIONS] [TYPE]
 
 The following word types are supported:
 
-CET4 | CET6 | CET8 | TOEFL | IELTS | GMAT | GRE | SAT
---- | --- | --- | --- | --- | --- | --- | ---
+CET4 | CET6 | TOEFL | IELTS | GMAT | GRE | SAT
+--- | --- | --- | --- | --- | --- | ---
 
 List all records when type is missing.
 

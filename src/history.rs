@@ -6,9 +6,7 @@ use rusqlite::Connection;
 use std::fs::create_dir;
 use std::path::PathBuf;
 
-static ALLOWED_TYPES: [&str; 8] = [
-    "CET4", "CET6", "CET8", "TOEFL", "IELTS", "GMAT", "GRE", "SAT",
-];
+static ALLOWED_TYPES: [&str; 7] = ["CET4", "CET6", "TOEFL", "IELTS", "GMAT", "GRE", "SAT"];
 
 #[allow(unused)]
 pub fn check_cache() -> Result<PathBuf> {
@@ -34,7 +32,6 @@ pub fn add_history(word: &str, types: &Option<Vec<String>>) -> Result<()> {
         DATE INTEGER NOT NULL,
         CET4 INTEGER,
         CET6 INTEGER,
-        CET8 INTEGER,
         TOEFL INTEGER,
         IELTS INTEGER,
         GMAT INTEGER,
