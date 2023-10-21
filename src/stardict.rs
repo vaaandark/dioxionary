@@ -331,3 +331,34 @@ impl Idx {
         }
     }
 }
+
+#[cfg(test)]
+mod test {
+    use itertools::izip;
+
+    use super::StarDict;
+
+    #[test]
+    fn load_stardict() {
+        let stardict = StarDict::new("./stardict-heritage/cdict-gb".into()).unwrap();
+        assert_eq!(stardict.dict_name(), "CDICT5英汉辞典");
+        assert_eq!(stardict.wordcount(), 57510);
+    }
+
+    #[test]
+    fn lookup_offline() {
+        let stardict = StarDict::new("./stardict-heritage/cdict-gb".into()).unwrap();
+        stardict.exact_lookup("rust").unwrap();
+    }
+
+    #[test]
+    fn lookup_offline_fuzzy() {
+        let stardict = StarDict::new("./stardict-heritage/cdict-gb".into()).unwrap();
+        let misspell = ["rst", "cago", "crade"];
+        let correct = ["rust", "cargo", "crate"];
+        for (mis, cor) in izip!(misspell, correct) {
+            let fuzzy = stardict.fuzzy_lookup(mis).unwrap();
+            fuzzy.iter().find(|w| w.word == cor).unwrap();
+        }
+    }
+}

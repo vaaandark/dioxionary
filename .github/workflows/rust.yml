@@ -30,6 +30,10 @@ jobs:
           toolchain: stable
           override: true
       - run: sudo apt-get install libssl-dev libsqlite3-dev libasound2-dev
+      - name: Checkout submodules
+        run: |
+          git submodule init
+          git submodule update
       - uses: actions-rs/cargo@v1
         with:
           command: test

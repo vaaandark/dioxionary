@@ -170,3 +170,18 @@ pub fn read_aloud(word: &str) -> Result<()> {
     }
     Ok(())
 }
+
+#[cfg(test)]
+mod test {
+    use super::WordItem;
+
+    #[test]
+    fn lookup_online_by_english() {
+        WordItem::lookup("rust").unwrap();
+    }
+
+    #[test]
+    fn lookup_online_by_chinese() {
+        WordItem::lookup("铁锈").unwrap();
+    }
+}

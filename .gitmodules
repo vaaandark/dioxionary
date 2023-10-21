@@ -1,0 +1,3 @@
+[submodule "stardict-heritage"]
+	path = stardict-heritage
+	url = https://github.com/vaaandark/stardict-heritage.git
