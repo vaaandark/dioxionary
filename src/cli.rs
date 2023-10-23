@@ -47,7 +47,7 @@ pub struct Cli {
     pub completions: Option<Shell>,
 
     /// The word being looked up.
-    pub word: Option<String>,
+    pub word: Option<Vec<String>>,
 }
 
 /// Dioxionary subcommands.
@@ -90,7 +90,7 @@ pub struct Lookup {
     pub read_aloud: bool,
 
     /// The word being looked up.
-    pub word: Option<String>,
+    pub word: Option<Vec<String>>,
 }
 
 /// Subcommand line parameters for listing history.

@@ -28,10 +28,16 @@ fn main() -> Result<()> {
                 let online = w.online;
                 let local_first = w.local_first;
                 let exact = w.exact_search;
+                let word = w.word;
                 let path = &w.local;
                 let read_aloud = w.read_aloud;
-                if let Some(word) = w.word {
-                    query(online, local_first, exact, word, path, read_aloud)
+                if let Some(word_list) = word {
+                    word_list.into_iter().for_each(|word| {
+                        if let Err(e) = query(online, local_first, exact, word, path, read_aloud) {
+                            println!("{}", e);
+                        }
+                    });
+                    Ok(())
                 } else {
                     repl(online, local_first, exact, path, read_aloud)
                 }
@@ -45,8 +51,13 @@ fn main() -> Result<()> {
         let word = cli.word;
         let path = &cli.local;
         let read_aloud = cli.read_aloud;
-        if let Some(word) = word {
-            query(online, local_first, exact, word, path, read_aloud)
+        if let Some(word_list) = word {
+            word_list.into_iter().for_each(|word| {
+                if let Err(e) = query(online, local_first, exact, word, path, read_aloud) {
+                    println!("{}", e);
+                }
+            });
+            Ok(())
         } else {
             repl(online, local_first, exact, path, read_aloud)
         }
