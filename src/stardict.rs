@@ -42,14 +42,15 @@ impl<'a> StarDict {
             }
         }
 
-        let path = path.to_str().unwrap();
-        let ifo = ifo.ok_or(Error::StarDictDirError(path.into()))?;
-        let idx = idx.ok_or(Error::StarDictDirError(path.into()))?;
-        let dict = dict.ok_or(Error::StarDictDirError(path.into()))?;
+        println!("fuckyou in {:?}", path);
 
-        let ifo = Ifo::new(ifo)?;
-        let mut idx = Idx::new(idx, ifo.version())?;
-        let dict = Dict::new(dict)?;
+        if ifo.is_none() || idx.is_none() || dict.is_none() {
+            return Err(Error::StarDictDirError(path.into_boxed_path()));
+        }
+
+        let ifo = Ifo::new(ifo.unwrap())?;
+        let mut idx = Idx::new(idx.unwrap(), ifo.version())?;
+        let dict = Dict::new(dict.unwrap())?;
 
         idx.items
             .retain(|(word, offset, size)| offset + size < dict.contents.len());
@@ -195,7 +196,11 @@ impl Ifo {
             dicttype: String::new(),
         };
 
-        for line in BufReader::new(File::open(path).map_err(|_| Error::CannotOpenIfoFile)?).lines()
+        for line in BufReader::new(
+            File::open(&path)
+                .map_err(|_| Error::CannotOpenIfoFile(path.clone().into_boxed_path()))?,
+        )
+        .lines()
         {
             let line = line?;
             if let Some(id) = line.find('=') {
@@ -213,16 +218,24 @@ impl Ifo {
                     }
                     "bookname" => ifo.bookname = val,
                     "wordcount" => {
-                        ifo.wordcount = val.parse().map_err(|_| Error::IfoFileParsingError)?
+                        ifo.wordcount = val.parse().map_err(|_| {
+                            Error::IfoFileParsingError(path.clone().into_boxed_path())
+                        })?
                     }
                     "synwordcount" => {
-                        ifo.synwordcount = val.parse().map_err(|_| Error::IfoFileParsingError)?
+                        ifo.synwordcount = val.parse().map_err(|_| {
+                            Error::IfoFileParsingError(path.clone().into_boxed_path())
+                        })?
                     }
                     "idxfilesize" => {
-                        ifo.idxfilesize = val.parse().map_err(|_| Error::IfoFileParsingError)?
+                        ifo.idxfilesize = val.parse().map_err(|_| {
+                            Error::IfoFileParsingError(path.clone().into_boxed_path())
+                        })?
                     }
                     "idxoffsetbits" => {
-                        ifo.idxoffsetbits = val.parse().map_err(|_| Error::IfoFileParsingError)?
+                        ifo.idxoffsetbits = val.parse().map_err(|_| {
+                            Error::IfoFileParsingError(path.clone().into_boxed_path())
+                        })?
                     }
                     "author" => ifo.author = val,
                     "email" => ifo.email = val,
@@ -251,11 +264,12 @@ struct Dict {
 #[allow(unused)]
 impl<'a> Dict {
     fn new(path: PathBuf) -> Result<Dict> {
-        let s = read(path).map_err(|x| Error::CannotOpenDictFile)?;
+        let s =
+            read(&path).map_err(|x| Error::CannotOpenDictFile(path.clone().into_boxed_path()))?;
         let mut d = GzDecoder::new(s.as_slice());
         let mut contents = String::new();
         d.read_to_string(&mut contents)
-            .map_err(|_| Error::DictFileError)?;
+            .map_err(|_| Error::DictFileError(path.clone().into_boxed_path()))?;
         Ok(Dict { contents })
     }
 
@@ -277,7 +291,7 @@ impl Idx {
         T: FromBytes<N> + TryInto<usize>,
         <T as TryInto<usize>>::Error: Debug,
     {
-        let f = File::open(path).map_err(|_| Error::CannotOpenIdxFile)?;
+        let f = File::open(&path).map_err(|_| Error::CannotOpenIdxFile)?;
         let mut f = BufReader::new(f);
 
         let mut items: Vec<_> = Vec::new();
@@ -287,7 +301,7 @@ impl Idx {
 
             let read_bytes = f
                 .read_until(0, &mut buf)
-                .map_err(|_| Error::DictFileError)?;
+                .map_err(|_| Error::DictFileError(path.clone().into_boxed_path()))?;
 
             if read_bytes == 0 {
                 break;

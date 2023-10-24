@@ -135,7 +135,7 @@ pub fn query(
                     found = true;
                     break;
                 }
-                _ => println!("{:?}", Error::WordNotFound(d.dict_name().to_owned())),
+                _ => println!("{}", Error::WordNotFound(d.dict_name().to_owned())),
             }
         }
 
@@ -143,7 +143,7 @@ pub fn query(
             if lookup_online(word).is_ok() {
                 found = true;
             } else {
-                println!("{:?}", Error::WordNotFound("online dictionary".to_owned()));
+                println!("{}", Error::WordNotFound("online dictionary".to_owned()));
             }
         }
 
@@ -190,7 +190,7 @@ pub fn repl(
             Ok(word) => {
                 rl.add_history_entry(&word);
                 if let Err(e) = query(online, local_first, exact, word, path, read_aloud) {
-                    println!("{:?}", e);
+                    println!("{}", e);
                 }
             }
             Err(ReadlineError::Interrupted) => break Ok(()),
