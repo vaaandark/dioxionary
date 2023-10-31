@@ -1,5 +1,5 @@
 //! History query and addition using [sqlite](https://sqlite.org/index.html).
-use crate::error::{Error, Result};
+use anyhow::{Context, Result};
 use chrono::Utc;
 use dirs::cache_dir;
 use prettytable::{Attr, Cell, Row, Table};
@@ -12,10 +12,10 @@ pub static ALLOWED_TYPES: [&str; 7] = ["CET4", "CET6", "TOEFL", "IELTS", "GMAT",
 
 /// Check and generate cache directory path.
 fn check_cache() -> Result<PathBuf> {
-    let mut path = cache_dir().ok_or(Error::CacheDirNotFound)?;
+    let mut path = cache_dir().with_context(|| "Couldn't find cache directory")?;
     path.push("dioxionary");
     if !path.exists() {
-        create_dir(&path)?;
+        create_dir(&path).with_context(|| format!("Failed to create directory {:?}", path))?;
     }
     path.push("dioxionary.db");
     Ok(path)
@@ -63,13 +63,13 @@ pub fn add_history(word: &str, types: &Option<Vec<String>>) -> Result<()> {
 /// List sorted or not history of a word type or all types.
 ///
 /// The output will be like:
-/// ```txt
+/// txt
 /// +------+------+-------+-------+------+-----+-----+
 /// | CET4 | CET6 | TOEFL | IELTS | GMAT | GRE | SAT |
 /// +------+------+-------+-------+------+-----+-----+
 /// | 220  | 305  | 207   | 203   | 142  | 242 | 126 |
 /// +------+------+-------+-------+------+-----+-----+
-/// ```
+///
 pub fn list_history(type_: Option<String>, sort: bool, table: bool, column: usize) -> Result<()> {
     let path = check_cache()?;
 

@@ -29,7 +29,6 @@ chrono = { features = ["clock"], default-features = false, version = "0.4" }
 itertools = { default-features = false, version = "0.10.5" }
 clap = { version = "4.4.2", features = ["derive", "help"], default-features = false }
 prettytable = { default-features = false, version = "0.10.0" }
-thiserror = "1.0.47"
 eio = { default-features = false, version = "0.1.2" }
 flate2 = { version = "1.0.27", features = ["any_zlib", "libz-sys"], default-features = false }
 rustyline = { default-features = false, version = "10.1.1" }
@@ -37,3 +36,4 @@ dialoguer = { default-features = false, version = "0.10.4" }
 tokio = { version = "1.32.0", default-features = false }
 rodio = { default-features = false, version = "0.17.1" }
 clap_complete = "4.4.0"
+anyhow = "1.0.75"

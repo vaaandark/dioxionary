@@ -2,13 +2,12 @@
 //! Use offline or online dictionary to look up words and memorize words in the terminal!
 pub mod cli;
 pub mod dict;
-pub mod error;
 pub mod history;
 pub mod stardict;
 use std::fs::DirEntry;
 
+use anyhow::{anyhow, Context, Result};
 use dialoguer::{console::Term, theme::ColorfulTheme, Select};
-use error::{Error, Result};
 use prettytable::{Attr, Cell, Row, Table};
 use rustyline::{error::ReadlineError, Editor};
 use stardict::StarDict;
@@ -18,7 +17,7 @@ fn lookup_online(word: &str) -> Result<()> {
     let word = dict::WordItem::lookup(word)?;
     println!("{}", word);
     if word.is_en {
-        history::add_history(&word.word, &word.types)?;
+        history::add_history(&word.word, &word.types).with_context(|| "Cannot look up online")?;
     }
     Ok(())
 }
@@ -47,12 +46,12 @@ fn get_dicts_entries() -> Result<Vec<DirEntry>> {
     let path = match (&dioxionary_dir, &stardict_compatible_dir) {
         (Some(dir), _) => dir,
         (None, Some(dir)) => dir,
-        (None, None) => return Err(Error::ConfigDirNotFound),
+        (None, None) => return Err(anyhow!("Couldn't find configuration directory")),
     };
 
     let mut dicts: Vec<_> = path
         .read_dir()
-        .map_err(|_| Error::ConfigDirNotFound)?
+        .with_context(|| format!("Failed to open configuration directory {:?}", path))?
         .filter_map(|x| x.ok())
         .collect();
 
@@ -64,17 +63,17 @@ fn get_dicts_entries() -> Result<Vec<DirEntry>> {
 /// Look up a word with many flags.
 ///
 /// # Params
-/// - `online`: use online dictionary?
-/// - `local_first`: Try offline dictionary first, then the online?
-/// - `exact`: disable fuzzy searching?
-/// - `word`: the word being looked up.
-/// - `path`: the path of the stardict directory.
-/// - `read_aloud`: play word pronunciation?
+/// - online: use online dictionary?
+/// - local_first: Try offline dictionary first, then the online?
+/// - exact: disable fuzzy searching?
+/// - word: the word being looked up.
+/// - path: the path of the stardict directory.
+/// - read_aloud: play word pronunciation?
 ///
 /// ## Word prefix
-/// - `/terraria`: enable fuzzy searching.
-/// - `|terraria`: disable fuzzy searching.
-/// - `@terraria`: use online dictionary.
+/// - /terraria: enable fuzzy searching.
+/// - |terraria: disable fuzzy searching.
+/// - @terraria: use online dictionary.
 pub fn query(
     online: bool,
     local_first: bool,
@@ -135,7 +134,7 @@ pub fn query(
                     found = true;
                     break;
                 }
-                _ => println!("{}", Error::WordNotFound(d.dict_name().to_owned())),
+                _ => eprintln!("Found nothing in {}", d.dict_name()),
             }
         }
 
@@ -143,7 +142,7 @@ pub fn query(
             if lookup_online(word).is_ok() {
                 found = true;
             } else {
-                println!("{}", Error::WordNotFound("online dictionary".to_owned()));
+                eprintln!("Found nothing in online dict");
             }
         }
 
@@ -175,7 +174,7 @@ pub fn query(
     Ok(())
 }
 
-/// Look up a word with many flags interactively using [`query`].
+/// Look up a word with many flags interactively using [query].
 pub fn repl(
     online: bool,
     local_first: bool,
@@ -183,19 +182,19 @@ pub fn repl(
     path: &Option<String>,
     read_aloud: bool,
 ) -> Result<()> {
-    let mut rl = Editor::<()>::new().map_err(|_| Error::ReadlineError)?;
+    let mut rl = Editor::<()>::new().with_context(|| "Failed to read lines")?;
     loop {
         let readline = rl.readline(">> ");
         match readline {
             Ok(word) => {
                 rl.add_history_entry(&word);
                 if let Err(e) = query(online, local_first, exact, word, path, read_aloud) {
-                    println!("{}", e);
+                    println!("{:?}", e);
                 }
             }
             Err(ReadlineError::Interrupted) => break Ok(()),
             Err(ReadlineError::Eof) => break Ok(()),
-            _ => break Err(Error::ReadlineError),
+            _ => break Err(anyhow!("Failed to read lines")),
         }
     }
 }

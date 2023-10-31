@@ -1,7 +1,9 @@
 //! Look up words from the Internet.
-use crate::error::{Error, Result};
-use itertools::EitherOrBoth::{Both, Left, Right};
-use itertools::Itertools;
+use anyhow::{anyhow, Context, Result};
+use itertools::{
+    EitherOrBoth::{Both, Left, Right},
+    Itertools,
+};
 use reqwest;
 use rodio::{Decoder, OutputStream, Sink};
 use scraper::{Html, Selector};
@@ -25,17 +27,26 @@ async fn get_html(word: &str) -> Result<Html> {
     static APP_USER_AGENT: &str = "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/106.0.0.0 Mobile Safari/537.36";
     let client = reqwest::Client::builder()
         .user_agent(APP_USER_AGENT)
-        .build()?;
+        .build()
+        .with_context(|| "Failed build up a client for reqwest")?;
     let url = gen_url(word);
-    let res = client.get(url).send().await?;
-    let body = res.text().await?;
+    let res = client
+        .get(&url)
+        .send()
+        .await
+        .with_context(|| format!("Url {} is unreachable", url))?;
+    let body = res
+        .text()
+        .await
+        .with_context(|| "Failed to get full text of the response")?;
     Ok(Html::parse_document(&body))
 }
 
 /// Lookup words by Chinese meaning.
 fn zh2en(html: &Html) -> Result<String> {
     let mut res = String::new();
-    let trans = Selector::parse("ul.basic").map_err(|_| Error::HtmlParsingError)?;
+    let trans = Selector::parse("ul.basic")
+        .map_err(|_| anyhow!("Failed to select the fields of ul.basic in the HTML body"))?;
     html.select(&trans).for_each(|x| {
         x.text().collect::<Vec<_>>().iter().for_each(|x| {
             res.push_str(x);
@@ -48,7 +59,8 @@ fn zh2en(html: &Html) -> Result<String> {
 /// Lookup words by English word.
 fn en2zh(html: &Html) -> Result<String> {
     let mut res = String::new();
-    let phonetic = Selector::parse(".per-phone").map_err(|_| Error::HtmlParsingError)?;
+    let phonetic = Selector::parse(".per-phone")
+        .map_err(|_| anyhow!("Failed select the fields of .per-phone in the HTML body"))?;
     html.select(&phonetic).for_each(|x| {
         x.text().collect::<Vec<_>>().iter().for_each(|x| {
             res.push_str(x);
@@ -57,14 +69,16 @@ fn en2zh(html: &Html) -> Result<String> {
     });
     res.push('\n');
     let mut pos_text: Vec<&str> = Vec::new();
-    let pos = Selector::parse(".pos").map_err(|_| Error::HtmlParsingError)?;
+    let pos = Selector::parse(".pos")
+        .map_err(|_| anyhow!("Failed select the fields of .pos in the HTML body"))?;
     html.select(&pos).for_each(|x| {
         x.text().collect::<Vec<_>>().iter().for_each(|x| {
             pos_text.push(*x);
         });
     });
     let mut trans_text: Vec<&str> = Vec::new();
-    let trans = Selector::parse(".trans").map_err(|_| Error::HtmlParsingError)?;
+    let trans = Selector::parse(".trans")
+        .map_err(|_| anyhow!("Failed to select the fields of .trans in the HTML body"))?;
     html.select(&trans).for_each(|x| {
         x.text().collect::<Vec<_>>().iter().for_each(|x| {
             trans_text.push(*x);
@@ -86,7 +100,8 @@ fn en2zh(html: &Html) -> Result<String> {
 
 /// Get the diffculty level of the word from html.
 fn get_exam_type(html: &Html) -> Result<Vec<String>> {
-    let types = Selector::parse(".exam_type-value").map_err(|_| Error::HtmlParsingError)?;
+    let types = Selector::parse(".exam_type-value")
+        .map_err(|_| anyhow!("Failed to select the fields of .exam_type-value in the HTML body"))?;
     let mut res: Vec<String> = Vec::new();
     html.select(&types).for_each(|x| {
         x.text()
@@ -122,9 +137,9 @@ impl WordItem {
             let is_en = is_enword(word);
             let dirction = if is_en { en2zh } else { zh2en };
             let trans = dirction(&html)?.trim().to_string();
-            // cannot find the word
+            // find nothing about the word
             if trans.is_empty() {
-                Err(Error::WordNotFound("online".to_string()))
+                Err(anyhow!("Found nothing in online dict"))
             } else {
                 let types = if is_en {
                     Some(get_exam_type(&html)?)

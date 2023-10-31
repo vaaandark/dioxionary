@@ -1,5 +1,5 @@
 //! Look up words form the offline stardicts.
-use crate::error::{Error, Result};
+use anyhow::{anyhow, Context, Result};
 use eio::FromBytes;
 use flate2::read::GzDecoder;
 use std::cmp::min;
@@ -30,8 +30,12 @@ impl<'a> StarDict {
         let mut idx: Option<_> = None;
         let mut dict: Option<_> = None;
 
-        for p in path.read_dir().map_err(|_| Error::PathError)? {
-            let path = p.map_err(|_| Error::PathError)?.path();
+        for path in path
+            .read_dir()
+            .with_context(|| format!("Failed to open directory {:?}", path))?
+            .flatten()
+        {
+            let path = path.path();
             if let Some(extension) = path.extension() {
                 match extension.to_str().unwrap() {
                     "ifo" => ifo = Some(path),
@@ -42,10 +46,8 @@ impl<'a> StarDict {
             }
         }
 
-        println!("fuckyou in {:?}", path);
-
         if ifo.is_none() || idx.is_none() || dict.is_none() {
-            return Err(Error::StarDictDirError(path.into_boxed_path()));
+            return Err(anyhow!("Stardict file is incomplete in {:?}", path));
         }
 
         let ifo = Ifo::new(ifo.unwrap())?;
@@ -197,8 +199,7 @@ impl Ifo {
         };
 
         for line in BufReader::new(
-            File::open(&path)
-                .map_err(|_| Error::CannotOpenIfoFile(path.clone().into_boxed_path()))?,
+            File::open(&path).with_context(|| format!("Failed to open ifo file {:?}", path))?,
         )
         .lines()
         {
@@ -218,24 +219,24 @@ impl Ifo {
                     }
                     "bookname" => ifo.bookname = val,
                     "wordcount" => {
-                        ifo.wordcount = val.parse().map_err(|_| {
-                            Error::IfoFileParsingError(path.clone().into_boxed_path())
-                        })?
+                        ifo.wordcount = val
+                            .parse()
+                            .with_context(|| format!("Failed to parse info file {:?}", path))?
                     }
                     "synwordcount" => {
-                        ifo.synwordcount = val.parse().map_err(|_| {
-                            Error::IfoFileParsingError(path.clone().into_boxed_path())
-                        })?
+                        ifo.synwordcount = val
+                            .parse()
+                            .with_context(|| format!("Failed to parse info file {:?}", path))?
                     }
                     "idxfilesize" => {
-                        ifo.idxfilesize = val.parse().map_err(|_| {
-                            Error::IfoFileParsingError(path.clone().into_boxed_path())
-                        })?
+                        ifo.idxfilesize = val
+                            .parse()
+                            .with_context(|| format!("Failed to parse info file {:?}", path))?
                     }
                     "idxoffsetbits" => {
-                        ifo.idxoffsetbits = val.parse().map_err(|_| {
-                            Error::IfoFileParsingError(path.clone().into_boxed_path())
-                        })?
+                        ifo.idxoffsetbits = val
+                            .parse()
+                            .with_context(|| format!("Failed to parse info file {:?}", path))?
                     }
                     "author" => ifo.author = val,
                     "email" => ifo.email = val,
@@ -265,11 +266,12 @@ struct Dict {
 impl<'a> Dict {
     fn new(path: PathBuf) -> Result<Dict> {
         let s =
-            read(&path).map_err(|x| Error::CannotOpenDictFile(path.clone().into_boxed_path()))?;
+            read(&path).with_context(|| format!("Failed to open stardict directory {:?}", path))?;
         let mut d = GzDecoder::new(s.as_slice());
         let mut contents = String::new();
-        d.read_to_string(&mut contents)
-            .map_err(|_| Error::DictFileError(path.clone().into_boxed_path()))?;
+        d.read_to_string(&mut contents).with_context(|| {
+            format!("Failed to open stardict directory {:?} as dz format", path)
+        })?;
         Ok(Dict { contents })
     }
 
@@ -291,7 +293,7 @@ impl Idx {
         T: FromBytes<N> + TryInto<usize>,
         <T as TryInto<usize>>::Error: Debug,
     {
-        let f = File::open(&path).map_err(|_| Error::CannotOpenIdxFile)?;
+        let f = File::open(&path).with_context(|| format!("Failed to open idx file {:?}", path))?;
         let mut f = BufReader::new(f);
 
         let mut items: Vec<_> = Vec::new();
@@ -301,7 +303,7 @@ impl Idx {
 
             let read_bytes = f
                 .read_until(0, &mut buf)
-                .map_err(|_| Error::DictFileError(path.clone().into_boxed_path()))?;
+                .with_context(|| format!("Failed to parse idx file {:?}", path))?;
 
             if read_bytes == 0 {
                 break;
@@ -319,11 +321,13 @@ impl Idx {
                 .collect();
 
             let mut b = [0; N];
-            f.read(&mut b).map_err(|_| Error::IdxFileParsingError)?;
+            f.read(&mut b)
+                .with_context(|| format!("Failed to parse idx file {:?}", path))?;
             let offset = T::from_be_bytes(b).try_into().unwrap();
 
             let mut b = [0; N];
-            f.read(&mut b).map_err(|_| Error::IdxFileParsingError)?;
+            f.read(&mut b)
+                .with_context(|| format!("Failed to parse idx file {:?}", path))?;
             let size = T::from_be_bytes(b).try_into().unwrap();
 
             if !word.is_empty() {
@@ -341,7 +345,7 @@ impl Idx {
             Version::V300 => Ok(Idx {
                 items: Idx::read_bytes::<8, u64>(path)?,
             }),
-            Version::Unknown => Err(Error::VersionError),
+            Version::Unknown => Err(anyhow!("Wrong stardict version in idx file {:?}", path)),
         }
     }
 }

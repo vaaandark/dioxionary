@@ -1,9 +1,9 @@
 //! StarDict in Rust!
 //! Use offline or online dictionary to look up words and memorize words in the terminal!
+use anyhow::Result;
 use clap::CommandFactory;
 use dioxionary::{
     cli::{Action, Cli, Parser},
-    error::Result,
     history, list_dicts, query, repl,
 };
 
@@ -32,11 +32,17 @@ fn main() -> Result<()> {
                 let path = &w.local;
                 let read_aloud = w.read_aloud;
                 if let Some(word_list) = word {
+                    let mut found = false;
                     word_list.into_iter().for_each(|word| {
                         if let Err(e) = query(online, local_first, exact, word, path, read_aloud) {
-                            println!("{}", e);
+                            eprintln!("{:?}", e);
+                        } else {
+                            found = true;
                         }
                     });
+                    if !found {
+                        std::process::exit(1);
+                    }
                     Ok(())
                 } else {
                     repl(online, local_first, exact, path, read_aloud)
@@ -52,11 +58,17 @@ fn main() -> Result<()> {
         let path = &cli.local;
         let read_aloud = cli.read_aloud;
         if let Some(word_list) = word {
+            let mut found = false;
             word_list.into_iter().for_each(|word| {
                 if let Err(e) = query(online, local_first, exact, word, path, read_aloud) {
-                    println!("{}", e);
+                    eprintln!("{:?}", e);
+                } else {
+                    found = true;
                 }
             });
+            if !found {
+                std::process::exit(1);
+            }
             Ok(())
         } else {
             repl(online, local_first, exact, path, read_aloud)
