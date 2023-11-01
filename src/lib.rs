@@ -63,17 +63,17 @@ fn get_dicts_entries() -> Result<Vec<DirEntry>> {
 /// Look up a word with many flags.
 ///
 /// # Params
-/// - online: use online dictionary?
-/// - local_first: Try offline dictionary first, then the online?
-/// - exact: disable fuzzy searching?
-/// - word: the word being looked up.
-/// - path: the path of the stardict directory.
-/// - read_aloud: play word pronunciation?
+/// - `online`: use online dictionary?
+/// - `local_first`: Try offline dictionary first, then the online?
+/// - `exact`: disable fuzzy searching?
+/// - `word`: the word being looked up.
+/// - `path`: the path of the stardict directory.
+/// - `read_aloud`: play word pronunciation?
 ///
 /// ## Word prefix
-/// - /terraria: enable fuzzy searching.
-/// - |terraria: disable fuzzy searching.
-/// - @terraria: use online dictionary.
+/// - `/terraria`: enable fuzzy searching.
+/// - `|terraria`: disable fuzzy searching.
+/// - `@terraria`: use online dictionary.
 pub fn query(
     online: bool,
     local_first: bool,
