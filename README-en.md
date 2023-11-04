@@ -19,9 +19,7 @@ cargo install dioxionary
 
 ## Usage
 
-![demo](images/demo.svg)
-
-> Characters are slightly misplaced after asciinema recording and svg-term conversion
+![demo](images/demo.gif)
 
 ### Enable argument completion
 

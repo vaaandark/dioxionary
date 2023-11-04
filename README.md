@@ -19,9 +19,7 @@ cargo install dioxionary
 
 ## 使用
 
-![demo](images/demo.svg)
-
-> asciinema 录制配合 svg-term 转换后字符略有错位现象
+![demo](images/demo.gif)
 
 ### 启用参数补全
 
