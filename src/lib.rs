@@ -83,6 +83,7 @@ pub fn query(
     read_aloud: bool,
 ) -> Result<()> {
     let mut word = word.as_str();
+    let mut corrected_word: Option<String> = None;
     let online = word.chars().next().map_or(online, |c| {
         if c == '@' {
             word = &word[1..];
@@ -160,6 +161,7 @@ pub fn query(
                         .interact_on_opt(&Term::stderr())?
                     {
                         let entry = &entries[sub_selection];
+                        corrected_word = Some(entry.word.to_owned());
                         println!("{}\n{}", entry.word, entry.trans);
                     }
                 }
@@ -168,6 +170,9 @@ pub fn query(
     }
 
     if read_aloud {
+        if let Some(corrected_word) = &corrected_word {
+            word = corrected_word;
+        }
         dict::read_aloud(word)?;
     }
 
