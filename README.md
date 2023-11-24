@@ -14,6 +14,12 @@
 
 ## 安装
 
+### 下载预构建二进制
+
+推荐从右侧的 [Github Release](https://github.com/vaaandark/dioxionary/releases) 下载对应平台的二进制文件。
+
+也可以到 [GitHub Actions](https://github.com/vaaandark/dioxionary/actions?query=workflow%3A%22CI+build%22+actor%3Avaaandark+branch%3Amaster+event%3Apush+is%3Asuccess) 下载最新构建的二进制，包含 Linux 和 Windows 版本。
+
 ### 自行编译
 
 ```console

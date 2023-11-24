@@ -14,6 +14,12 @@ Look up and memorize all words in terminal **offline** / **online**!
 
 ## Installation
 
+### Download Prebuilt Binaries
+
+It is recommended to download the prebuilt binary file for your platform from the [Github Release](https://github.com/vaaandark/dioxionary/releases) on the right side.
+
+Alternatively, you can also download the latest build binaries, including Linux and Windows versions, from the [GitHub Actions](https://github.com/vaaandark/dioxionary/actions?query=workflow%3A%22CI+build%22+actor%3Avaaandark+branch%3Amaster+event%3Apush+is%3Asuccess).
+
 ### Compile from source
 
 ```console
