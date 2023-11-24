@@ -9,7 +9,6 @@ use std::io::{prelude::*, BufReader};
 use std::path::PathBuf;
 
 /// The stardict to be looked up.
-#[allow(unused)]
 pub struct StarDict {
     ifo: Ifo,
     idx: Idx,
@@ -22,7 +21,6 @@ pub struct Entry<'a> {
     pub trans: &'a str,
 }
 
-#[allow(unused)]
 impl<'a> StarDict {
     /// Load stardict from a directory.
     pub fn new(path: PathBuf) -> Result<StarDict> {
@@ -55,7 +53,7 @@ impl<'a> StarDict {
         let dict = Dict::new(dict.unwrap())?;
 
         idx.items
-            .retain(|(word, offset, size)| offset + size < dict.contents.len());
+            .retain(|(_word, offset, size)| offset + size < dict.contents.len());
 
         Ok(StarDict { ifo, idx, dict })
     }
@@ -154,7 +152,6 @@ impl<'a> StarDict {
 /// sametypesequence= // very important.
 /// dicttype=
 
-#[allow(unused)]
 #[derive(Debug)]
 struct Ifo {
     version: Version,
@@ -179,7 +176,6 @@ enum Version {
     Unknown,
 }
 
-#[allow(unused)]
 impl Ifo {
     fn new(path: PathBuf) -> Result<Ifo> {
         let mut ifo = Ifo {
@@ -257,12 +253,10 @@ impl Ifo {
     }
 }
 
-#[allow(unused)]
 struct Dict {
     contents: String,
 }
 
-#[allow(unused)]
 impl<'a> Dict {
     fn new(path: PathBuf) -> Result<Dict> {
         let s =
@@ -280,13 +274,11 @@ impl<'a> Dict {
     }
 }
 
-#[allow(unused)]
 #[derive(Debug)]
 struct Idx {
     items: Vec<(String, usize, usize)>,
 }
 
-#[allow(unused)]
 impl Idx {
     fn read_bytes<const N: usize, T>(path: PathBuf) -> Result<Vec<(String, usize, usize)>>
     where
@@ -315,7 +307,7 @@ impl Idx {
                 }
             }
 
-            let mut word: String = String::from_utf8_lossy(&buf)
+            let word: String = String::from_utf8_lossy(&buf)
                 .chars()
                 .filter(|&c| c != '\u{fffd}')
                 .collect();
