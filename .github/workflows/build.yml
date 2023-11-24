@@ -1,0 +1,39 @@
+on: [push]
+
+name: CI build
+
+jobs:
+  build:
+    name: Build for ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            artifact_name: dioxionary
+            asset_name: dioxionary-linux-amd64
+          - os: windows-latest
+            artifact_name: dioxionary.exe
+            asset_name: dioxionary-windows-amd64.exe
+    steps:
+      - name: Install dependencies for Linux
+        if: matrix.os == 'ubuntu-latest'
+        run: sudo apt-get install libssl-dev libsqlite3-dev libasound2-dev
+      - uses: actions/checkout@v2
+      - uses: Swatinem/rust-cache@v1
+      - uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args: --release
+      - uses: actions/upload-artifact@v2
+        with:
+          name: ${{ matrix.asset_name }}
+          path: target/release/${{ matrix.artifact_name }}
+      - name: Release
+        uses: svenstaro/upload-release-action@v2
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: target/release/${{ matrix.artifact_name }}
+          asset_name: ${{ matrix.asset_name }}
+          tag: ${{ github.ref }}
