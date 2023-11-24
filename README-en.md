@@ -1,5 +1,8 @@
 # dioxionary
 
+[![dependency status](https://deps.rs/repo/github/vaaandark/dioxionary/status.svg)](https://deps.rs/repo/github/vaaandark/dioxionary)
+[![Build Status](https://github.com/vaaandark/dioxionary/actions/workflows/rust.yml/badge.svg?branch=master)](https://github.com/vaaandark/dioxionary/actions/workflows/rust.yml)
+
 [简体中文](README.md) | [English](README-en.md)
 
 Look up and memorize all words in terminal **offline** / **online**!
