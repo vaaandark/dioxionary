@@ -21,18 +21,18 @@ crate-type = ["lib"]
 
 [dependencies]
 reqwest = { version = "0.11.22", features = ["blocking", "default-tls"], default-features = false }
-hyper = "0.14.27"
-scraper = { default-features = false, version = "0.13.0" }
-dirs = "4.0.0"
-rusqlite = "0.28.0"
+hyper = "1.0.1"
+scraper = { default-features = false, version = "0.18.1" }
+dirs = "5.0.1"
+rusqlite = "0.30.0"
 chrono = { features = ["clock"], default-features = false, version = "0.4" }
-itertools = { default-features = false, version = "0.10.5" }
+itertools = { default-features = false, version = "0.12.0" }
 clap = { version = "4.4.8", features = ["derive", "help"], default-features = false }
 prettytable = { default-features = false, version = "0.10.0" }
 eio = { default-features = false, version = "0.1.2" }
 flate2 = { version = "1.0.28", features = ["any_zlib", "libz-sys"], default-features = false }
-rustyline = { default-features = false, version = "10.1.1" }
-dialoguer = { default-features = false, version = "0.10.4" }
+rustyline = { default-features = false, version = "12.0.0" }
+dialoguer = { default-features = false, version = "0.11.0" }
 tokio = { version = "1.34.0", default-features = false }
 rodio = "0.17.3"
 clap_complete = "4.4.4"

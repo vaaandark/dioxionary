@@ -9,7 +9,7 @@ use std::fs::DirEntry;
 use anyhow::{anyhow, Context, Result};
 use dialoguer::{console::Term, theme::ColorfulTheme, Select};
 use prettytable::{Attr, Cell, Row, Table};
-use rustyline::{error::ReadlineError, Editor};
+use rustyline::error::ReadlineError;
 use stardict::StarDict;
 
 /// Lookup word from the Internel and add the result to history.
@@ -187,12 +187,12 @@ pub fn repl(
     path: &Option<String>,
     read_aloud: bool,
 ) -> Result<()> {
-    let mut rl = Editor::<()>::new().with_context(|| "Failed to read lines")?;
+    let mut rl = rustyline::DefaultEditor::new().with_context(|| "Failed to read lines")?;
     loop {
         let readline = rl.readline(">> ");
         match readline {
             Ok(word) => {
-                rl.add_history_entry(&word);
+                let _ = rl.add_history_entry(&word);
                 if let Err(e) = query(online, local_first, exact, word, path, read_aloud) {
                     println!("{:?}", e);
                 }
