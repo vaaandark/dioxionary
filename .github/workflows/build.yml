@@ -20,7 +20,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - uses: Swatinem/rust-cache@v1
-      - run: sudo apt-get install libssl-dev libsqlite3-dev libasound2-dev
+      - run: sudo apt-get update && sudo apt-get install -y libssl-dev libsqlite3-dev libasound2-dev
       - name: Build binary
         uses: houseabsolute/actions-rust-cross@v0
         with:

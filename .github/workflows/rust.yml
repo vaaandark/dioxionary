@@ -13,7 +13,7 @@ jobs:
           profile: minimal
           toolchain: stable
           override: true
-      - run: sudo apt-get install libssl-dev libsqlite3-dev libasound2-dev
+      - run: sudo apt-get update && sudo apt-get install -y libssl-dev libsqlite3-dev libasound2-dev
       - uses: actions-rs/cargo@v1
         with:
           command: check
@@ -29,7 +29,7 @@ jobs:
           profile: minimal
           toolchain: stable
           override: true
-      - run: sudo apt-get install libssl-dev libsqlite3-dev libasound2-dev
+      - run: sudo apt-get update && sudo apt-get install -y libssl-dev libsqlite3-dev libasound2-dev
       - name: Checkout submodules
         run: |
           git submodule init
@@ -66,7 +66,7 @@ jobs:
           toolchain: stable
           override: true
           components: clippy
-      - run: sudo apt-get install libssl-dev libsqlite3-dev libasound2-dev
+      - run: sudo apt-get update && sudo apt-get install -y libssl-dev libsqlite3-dev libasound2-dev
       - uses: actions-rs/cargo@v1
         with:
           command: clippy
