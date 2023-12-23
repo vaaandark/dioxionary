@@ -6,15 +6,17 @@ use dioxionary::{
     cli::{Action, Cli, Parser},
     history, list_dicts, query, repl,
 };
+use std::env;
 
 fn main() -> Result<()> {
     let cli: Cli = Cli::parse();
 
     if let Some(shell) = cli.completions {
+        let bin_name = env::args().next().expect("impossible");
         clap_complete::generate(
             shell,
             &mut Cli::command(),
-            "dioxionary",
+            bin_name,
             &mut std::io::stdout(),
         );
         std::process::exit(0);
