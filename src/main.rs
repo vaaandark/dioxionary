@@ -13,12 +13,7 @@ fn main() -> Result<()> {
 
     if let Some(shell) = cli.completions {
         let bin_name = env::args().next().expect("impossible");
-        clap_complete::generate(
-            shell,
-            &mut Cli::command(),
-            bin_name,
-            &mut std::io::stdout(),
-        );
+        clap_complete::generate(shell, &mut Cli::command(), bin_name, &mut std::io::stdout());
         std::process::exit(0);
     }
 
