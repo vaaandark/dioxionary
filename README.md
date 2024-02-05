@@ -5,32 +5,34 @@
 
 [简体中文](README.md) | [English](README-en.md)
 
-使用 **离线** / **在线** 词典在终端中查单词、背单词！
+Look up and memorize all words in terminal **offline** / **online**!
 
-## 依赖
+## Prerequisites
 
 - sqlite3
 - openssl
 
-## 安装
+## Installation
 
-### 下载预构建二进制
+### Download Prebuilt Binaries
 
-推荐从右侧的 [Github Release](https://github.com/vaaandark/dioxionary/releases) 下载对应平台的二进制文件。
+It is recommended to download the prebuilt binary file for your platform from the [Github Release](https://github.com/vaaandark/dioxionary/releases) on the right side.
 
-也可以到 [GitHub Actions](https://github.com/vaaandark/dioxionary/actions?query=workflow%3A%22CI+build%22+actor%3Avaaandark+branch%3Amaster+event%3Apush+is%3Asuccess) 下载最新构建的二进制，包含 Linux 和 Windows 版本。
+Alternatively, you can also download the latest build binaries, including Linux and Windows versions, from the [GitHub Actions](https://github.com/vaaandark/dioxionary/actions?query=workflow%3A%22CI+build%22+actor%3Avaaandark+branch%3Amaster+event%3Apush+is%3Asuccess).
 
-### 自行编译
+### Compile from source
 
 ```console
-cargo install dioxionary
+cargo install --git https://github.com/lengyijun/dioxionary --branch spaced_repetition_pr
 ```
 
-## 使用
+## Usage
 
 ![demo](images/demo.gif)
 
-### 启用参数补全
+[![asciicast](https://asciinema.org/a/630227.svg)](https://asciinema.org/a/630227)
+
+### Enable argument completion
 
 ```console
 $ eval "$(dioxionary -c bash)" # for bash
@@ -38,33 +40,33 @@ $ eval "$(dioxionary -c zsh)"  # for zsh
 $ eval "$(dioxionary -c fish)" # for fish
 ```
 
-可以将上述命令直接写到 shell 的配置文件中。
+You can write the above commands directly into the configuration file of your shell.
 
-### 查询单词
+### Look up word meaning
 
 ```console
 $ dioxionary lookup [OPTIONS] [WORD]
 ```
 
-子命令 `lookup` 可以省略：
+The subcommand `lookup` can be omitted:
 
 ```console
 $ dioxionary [OPTIONS] [WORD]
 ```
 
-当参数中没有待查单词时，将进入交互模式，可以无限查询，直至按下 `Ctrl+D` 。
+When there is no word to be searched in the parameter, it will enter the interactive mode, and can search infinitely until `Ctrl+D` is pressed.
 
-支持并默认使用模糊搜索(fuzzy search)，在词典中没有找到单词时会输出最相似的一个或多个单词的释义。
+Supports and uses fuzzy search by default. When no word is found in the dictionary, it will output the most similar definition of one or more words.
 
-使用 `-e` 或者 `--exact-search` 可以关闭模糊搜索。也可以通过在单词前添加 `/` 或者 `|` 来打开或关闭模糊搜索，在单词前添加 `@` 使用网络词典。
+Use `-e` or `--exact-search` to turn off fuzzy search. You can also turn fuzzy search on or off by prefixing a word with `/` or `|`, and use web dictionaries with `@` before a word.
 
 ```console
-$ dioxionary /terraria   # 模糊搜索
-$ dioxionary '|terraria' # 非模糊搜索，注意使用引号
-$ dioxionary @terraria   # 使用网络词典
+$ dioxionary /terraria   # Fuzzy search
+$ dioxionary '|terraria' # Non-fuzzy search, pay attention to use quotation marks
+$ dioxionary @terraria   # Online search
 ```
 
-默认使用本地词典，本地词典目录应当存放在：
+The local dictionary is used by default, and the local dictionary directory should be stored in:
 
 |Platform | Value                                             | Example                                        |
 | ------- | ------------------------------------------------- | ---------------------------------------------- |
@@ -72,9 +74,9 @@ $ dioxionary @terraria   # 使用网络词典
 | macOS   | `$HOME`/Library/Application Support/dioxionary         | /Users/Alice/Library/Application Support/dioxionary |
 | Windows | `{FOLDERID_RoamingAppData}`/dioxionary                 | C:\Users\Alice\AppData\Roaming/dioxionary           |
 
-> 只支持 stardict 的词典格式
+> Only stardict dictionary format is supported
 
-> 可以在 http://download.huzheng.org/ 下载 stardict 格式词典
+> You can download dictionaries in stardict format at http://download.huzheng.org/
 
 ```plain
 ~/.config/dioxionary
@@ -91,38 +93,42 @@ $ dioxionary @terraria   # 使用网络词典
     └── cdict-gb.ifo
 ```
 
-使用 `-x` 选项会使用在线词典查询：
+Using the `-x` option will use an online dictionary lookup:
 
 ```console
 $ dioxionary -x <DICTDIR> <WORD>
 ```
 
-可以使用 `-l` 或 `--local` 选项指定词典文件路径。
+The dictionary file path can be specified with the `-l` or `--local` option.
 
-使用 `-L` 或 `--local-first` 选项则会在本地查询失败后使用网络词典。推荐在 shell 配置文件中加入 `alias rl='dioxionary -l'`。
+Use the `-L` or `--local-first` option to use the network dictionary after a local lookup fails. It is recommended to add `alias rl='dioxionary -l'` in the shell configuration file.
 
-### 多字典支持
+### Logseq support
 
-如上文示例中，可以将词典目录分别命名为 `00-XXX`, `01-YYY`, ..., `99-ZZZ` 这样的格式来实现优先级。
+`rg TODO` see detail
 
-### 列出记录
+### Multiple dictionary support
 
-> 注意：只有在线查词时会查得并记录单词类型
+As in the above example, the dictionary directories can be named in the format of `00-XXX`, `01-YYY`, ..., `99-ZZZ` to achieve priority.
+
+### List records
+
+> Note: Only the word type will be searched and recorded when searching online
 
 ```console
 $ dioxionary list [OPTIONS] [TYPE]
 ```
 
-以下为支持的单词类型：
+The following word types are supported:
 
 CET4 | CET6 | TOEFL | IELTS | GMAT | GRE | SAT
 --- | --- | --- | --- | --- | --- | ---
 
-缺少类型时列出所有记录。
+List all records when type is missing.
 
-### 统计数据
+### Statistical data
 
-统计查询过的各类单词的个数：
+Count the number of various words that have been queried:
 
 ```console
 $ dioxionary count

@@ -16,10 +16,9 @@ fn gen_url(word: &str) -> String {
 }
 
 /// Is an English word?
-fn is_enword(word: &str) -> bool {
-    word.as_bytes()
-        .iter()
-        .all(|x| x.is_ascii_alphabetic() || x.is_ascii_whitespace())
+pub fn is_enword(word: &str) -> bool {
+    word.chars()
+        .all(|c| c.is_ascii_alphanumeric() || c.is_ascii_whitespace())
 }
 
 /// Get web dictionary html by word.
@@ -98,20 +97,6 @@ fn en2zh(html: &Html) -> Result<String> {
     Ok(res)
 }
 
-/// Get the diffculty level of the word from html.
-fn get_exam_type(html: &Html) -> Result<Vec<String>> {
-    let types = Selector::parse(".exam_type-value")
-        .map_err(|_| anyhow!("Failed to select the fields of .exam_type-value in the HTML body"))?;
-    let mut res: Vec<String> = Vec::new();
-    html.select(&types).for_each(|x| {
-        x.text()
-            .collect::<Vec<_>>()
-            .iter()
-            .for_each(|x| res.push(x.to_string()))
-    });
-    Ok(res)
-}
-
 /// Word item from the web dictionary.
 pub struct WordItem {
     /// The word being looked up.
@@ -126,7 +111,7 @@ pub struct WordItem {
 
 impl WordItem {
     /// Build a word item by looking up from the web dictionary.
-    pub fn lookup(word: &str) -> Result<WordItem> {
+    pub fn lookup_online(word: &str) -> Result<WordItem> {
         let runtime = tokio::runtime::Builder::new_current_thread()
             .enable_all()
             .build()
@@ -141,11 +126,7 @@ impl WordItem {
             if trans.is_empty() {
                 Err(anyhow!("Found nothing in online dict"))
             } else {
-                let types = if is_en {
-                    Some(get_exam_type(&html)?)
-                } else {
-                    None
-                };
+                let types = None;
                 let word = word.to_owned();
                 Ok(WordItem {
                     word,
@@ -192,11 +173,11 @@ mod test {
 
     #[test]
     fn lookup_online_by_english() {
-        WordItem::lookup("rust").unwrap();
+        WordItem::lookup_online("rust").unwrap();
     }
 
     #[test]
     fn lookup_online_by_chinese() {
-        WordItem::lookup("铁锈").unwrap();
+        WordItem::lookup_online("铁锈").unwrap();
     }
 }
