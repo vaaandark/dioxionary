@@ -4,7 +4,6 @@ use itertools::{
     EitherOrBoth::{Both, Left, Right},
     Itertools,
 };
-use reqwest;
 use rodio::{Decoder, OutputStream, Sink};
 use scraper::{Html, Selector};
 use std::fmt;
@@ -24,7 +23,8 @@ fn is_enword(word: &str) -> bool {
 
 /// Get web dictionary html by word.
 async fn get_html(word: &str) -> Result<Html> {
-    static APP_USER_AGENT: &str = "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/106.0.0.0 Mobile Safari/537.36";
+    static APP_USER_AGENT: &str =
+        "Mozilla/5.0 (X11; Linux x86_64; rv:126.0) Gecko/20100101 Firefox/126.0";
     let client = reqwest::Client::builder()
         .user_agent(APP_USER_AGENT)
         .build()
