@@ -7,17 +7,9 @@ description = "Remember all words in terminal!"
 license = "GPL-2.0"
 homepage = "https://github.com/vaaandark/dioxionary"
 repository = "https://github.com/vaaandark/dioxionary"
+build = "build.rs"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
-[[bin]]
-name = "dioxionary"
-path = "src/main.rs"
-
-[lib]
-name = "dioxionary"
-path = "src/lib.rs"
-crate-type = ["lib"]
 
 [dependencies]
 reqwest = { version = "0.11.22", features = ["blocking", "default-tls"], default-features = false }
@@ -25,7 +17,7 @@ hyper = "1.0.1"
 scraper = { default-features = false, version = "0.18.1" }
 dirs = "5.0.1"
 rusqlite = "0.30.0"
-chrono = { features = ["clock"], default-features = false, version = "0.4" }
+chrono = { features = ["clock", "serde"], default-features = false, version = "0.4" }
 itertools = { default-features = false, version = "0.12.0" }
 clap = { version = "4.4.8", features = ["derive", "help"], default-features = false }
 prettytable = { default-features = false, version = "0.10.0" }
@@ -37,3 +29,22 @@ tokio = { version = "1.34.0", default-features = false }
 rodio = "0.17.3"
 clap_complete = "4.4.4"
 anyhow = "1.0.75"
+walkdir = "2.4.0"
+crossterm = "0.27.0"
+ratatui = "0.26.0"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0.108"
+strsim = "0.10.0"
+pulldown-cmark-mdcat = "2.1.0"
+mdcat = "2.1.0"
+syntect = "5.1.0"
+# pulldown-cmark-mdcat-ratatui = { path = "../mdcat-ratatui/pulldown-cmark-mdcat" , package = "pulldown-cmark-mdcat" }
+pulldown-cmark-mdcat-ratatui = { git = "https://github.com/lengyijun/mdcat-ratatui" , branch = "ratatui", package = "pulldown-cmark-mdcat" }
+shadow-rs = "0"
+
+[dependencies.fsrs]
+git = "https://github.com/open-spaced-repetition/fsrs-rs.git"
+rev = "f45f46bdba6625f03677eaeb039dd8a6ffcad688"
+
+[build-dependencies]
+shadow-rs = "0"
