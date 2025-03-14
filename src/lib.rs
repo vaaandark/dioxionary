@@ -24,23 +24,12 @@ fn lookup_online(word: &str) -> Result<()> {
 
 /// Get the entries of the stardicts.
 fn get_dicts_entries() -> Result<Vec<DirEntry>> {
-    let mut dioxionary_dir = dirs::config_dir();
-    let dioxionary_dir = dioxionary_dir
-        .as_mut()
-        .map(|dir| {
-            dir.push("dioxionary");
-            dir
-        })
+    let dioxionary_dir = dirs::config_dir()
+        .map(|dir| dir.join("dioxionary"))
         .filter(|dir| dir.is_dir());
 
-    let mut stardict_compatible_dir = dirs::home_dir();
-    let stardict_compatible_dir = stardict_compatible_dir
-        .as_mut()
-        .map(|dir| {
-            dir.push(".stardict");
-            dir.push("dic");
-            dir
-        })
+    let stardict_compatible_dir = dirs::home_dir()
+        .map(|dir| dir.join(".stardict").join("dic"))
         .filter(|dir| dir.is_dir());
 
     let path = match (&dioxionary_dir, &stardict_compatible_dir) {
@@ -80,10 +69,13 @@ pub fn query(
     exact: bool,
     word: String,
     path: &Option<String>,
-    read_aloud: bool,
+    #[cfg(feature = "read-aloud")] read_aloud: bool,
 ) -> Result<()> {
     let mut word = word.as_str();
+
+    #[cfg(feature = "read-aloud")]
     let mut corrected_word: Option<String> = None;
+
     let online = word.chars().next().map_or(online, |c| {
         if c == '@' {
             word = &word[1..];
@@ -105,7 +97,10 @@ pub fn query(
         _ => exact,
     };
 
+    #[cfg(feature = "read-aloud")]
     let len = word.len();
+
+    #[cfg(feature = "read-aloud")]
     let read_aloud = match word.chars().last() {
         Some('~') => {
             word = &word[..len - 1];
@@ -161,14 +156,19 @@ pub fn query(
                         .interact_on_opt(&Term::stderr())?
                     {
                         let entry = &entries[sub_selection];
-                        corrected_word = Some(entry.word.to_owned());
                         println!("{}\n{}", entry.word, entry.trans);
+
+                        #[cfg(feature = "read-aloud")]
+                        {
+                            corrected_word = Some(entry.word.to_owned());
+                        }
                     }
                 }
             }
         }
     }
 
+    #[cfg(feature = "read-aloud")]
     if read_aloud {
         if let Some(corrected_word) = &corrected_word {
             word = corrected_word;
@@ -185,7 +185,7 @@ pub fn repl(
     local_first: bool,
     exact: bool,
     path: &Option<String>,
-    read_aloud: bool,
+    #[cfg(feature = "read-aloud")] read_aloud: bool,
 ) -> Result<()> {
     let mut rl = rustyline::DefaultEditor::new().with_context(|| "Failed to read lines")?;
     loop {
@@ -193,7 +193,15 @@ pub fn repl(
         match readline {
             Ok(word) => {
                 let _ = rl.add_history_entry(&word);
-                if let Err(e) = query(online, local_first, exact, word, path, read_aloud) {
+                if let Err(e) = query(
+                    online,
+                    local_first,
+                    exact,
+                    word,
+                    path,
+                    #[cfg(feature = "read-aloud")]
+                    read_aloud,
+                ) {
                     println!("{:?}", e);
                 }
             }

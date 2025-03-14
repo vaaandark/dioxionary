@@ -1,13 +1,16 @@
 //! Look up words from the Internet.
+#[cfg(feature = "read-aloud")]
+use rodio::{Decoder, OutputStream, Sink};
+#[cfg(feature = "read-aloud")]
+use std::io::Cursor;
+
 use anyhow::{anyhow, Context, Result};
 use itertools::{
     EitherOrBoth::{Both, Left, Right},
     Itertools,
 };
-use rodio::{Decoder, OutputStream, Sink};
 use scraper::{Html, Selector};
 use std::fmt;
-use std::io::Cursor;
 
 /// Generate url for looking up.
 fn gen_url(word: &str) -> String {
@@ -172,6 +175,7 @@ impl fmt::Display for WordItem {
 }
 
 /// Play word pronunciation.
+#[cfg(feature = "read-aloud")]
 pub fn read_aloud(word: &str) -> Result<()> {
     let (_stream, stream_handle) = OutputStream::try_default().unwrap();
     let url = format!("https://dict.youdao.com/dictvoice?audio={}&type=1", word);
