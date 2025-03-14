@@ -153,7 +153,6 @@ impl<'a> StarDict {
 /// date=
 /// sametypesequence= // very important.
 /// dicttype=
-
 #[allow(unused)]
 #[derive(Debug)]
 struct Ifo {

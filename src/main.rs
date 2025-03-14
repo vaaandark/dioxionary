@@ -27,11 +27,20 @@ fn main() -> Result<()> {
                 let exact = w.exact_search;
                 let word = w.word;
                 let path = &w.local;
+                #[cfg(feature = "read-aloud")]
                 let read_aloud = w.read_aloud;
                 if let Some(word_list) = word {
                     let mut found = false;
                     word_list.into_iter().for_each(|word| {
-                        if let Err(e) = query(online, local_first, exact, word, path, read_aloud) {
+                        if let Err(e) = query(
+                            online,
+                            local_first,
+                            exact,
+                            word,
+                            path,
+                            #[cfg(feature = "read-aloud")]
+                            read_aloud,
+                        ) {
                             eprintln!("{:?}", e);
                         } else {
                             found = true;
@@ -42,7 +51,14 @@ fn main() -> Result<()> {
                     }
                     Ok(())
                 } else {
-                    repl(online, local_first, exact, path, read_aloud)
+                    repl(
+                        online,
+                        local_first,
+                        exact,
+                        path,
+                        #[cfg(feature = "read-aloud")]
+                        read_aloud,
+                    )
                 }
             }
             Action::Dicts => list_dicts(),
@@ -53,11 +69,20 @@ fn main() -> Result<()> {
         let exact = cli.exact_search;
         let word = cli.word;
         let path = &cli.local;
+        #[cfg(feature = "read-aloud")]
         let read_aloud = cli.read_aloud;
         if let Some(word_list) = word {
             let mut found = false;
             word_list.into_iter().for_each(|word| {
-                if let Err(e) = query(online, local_first, exact, word, path, read_aloud) {
+                if let Err(e) = query(
+                    online,
+                    local_first,
+                    exact,
+                    word,
+                    path,
+                    #[cfg(feature = "read-aloud")]
+                    read_aloud,
+                ) {
                     eprintln!("{:?}", e);
                 } else {
                     found = true;
@@ -68,7 +93,14 @@ fn main() -> Result<()> {
             }
             Ok(())
         } else {
-            repl(online, local_first, exact, path, read_aloud)
+            repl(
+                online,
+                local_first,
+                exact,
+                path,
+                #[cfg(feature = "read-aloud")]
+                read_aloud,
+            )
         }
     }
 }
