@@ -85,8 +85,7 @@ jobs:
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal
-          # Since rust 1.72, some platforms are tier 3
-          toolchain: 1.71
+          toolchain: 1.81
           default: true
       
       - name: Install OpenSSL
