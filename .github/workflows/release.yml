@@ -1,0 +1,95 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "*"
+
+  workflow_dispatch:
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  release:
+    name: Cross build for ${{ matrix.target }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            exe: dioxionary
+            cross: false
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-musl
+            exe: dioxionary
+            cross: true
+          - os: ubuntu-latest
+            target: aarch64-unknown-linux-musl
+            exe: dioxionary
+            cross: true
+
+          - os: macos-latest
+            target: x86_64-apple-darwin
+            exe: dioxionary
+            cross: false
+          
+          - os: macos-latest
+            target: aarch64-apple-darwin
+            exe: dioxionary
+            cross: false
+
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+            exe: dioxionary.exe
+            cross: false
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: 1.81
+          default: true
+      
+      - name: Install OpenSSL
+        if: matrix.os == 'ubuntu-latest'
+        run: sudo apt-get -y install pkg-config libssl-dev
+      - name: Install OpenSSL
+        if: matrix.os == 'macos-latest'
+        run: brew install openssl@3
+      
+      # Native build
+      - name: Install target
+        if: matrix.cross == false
+        run: rustup target add ${{ matrix.target }}
+      - name: Build release
+        if: matrix.cross == false 
+        run: cargo build --release --target ${{ matrix.target }}
+
+      # Cross build
+      - name: Install cross
+        if: matrix.cross
+        run: cargo install --version 0.2.5 cross
+      - name: Build release
+        if: matrix.cross
+        run: cross build --release --target ${{ matrix.target }}
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dioxionary-${{ matrix.target }}
+          path: target/${{ matrix.target }}/release/${{ matrix.exe }}
+      - name: Zip Release
+        uses: TheDoctor0/zip-release@0.6.1
+        with:
+          type: zip
+          filename: dioxionary-${{ matrix.target }}.zip
+          directory: target/${{ matrix.target }}/release/
+          path: ${{ matrix.exe }}
+      - name: Publish
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: target/${{ matrix.target }}/release/dioxionary-${{ matrix.target }}.zip
+          generate_release_notes: true
+          draft: true

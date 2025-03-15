@@ -4,103 +4,72 @@ use anyhow::Result;
 use clap::CommandFactory;
 use dioxionary::{
     cli::{Action, Cli, Parser},
-    history, list_dicts, query, repl,
+    dicts::{default_local_dict_path, DictManager, DictOptions},
+    history,
 };
 use std::env;
 
 fn main() -> Result<()> {
-    let cli: Cli = Cli::parse();
+    let mut cli = Cli::parse();
 
-    if let Some(shell) = cli.completions {
-        let bin_name = env::args().next().expect("impossible");
-        clap_complete::generate(shell, &mut Cli::command(), bin_name, &mut std::io::stdout());
-        std::process::exit(0);
+    if cli.action.is_none() {
+        let mut args = std::env::args().collect::<Vec<_>>();
+        args.insert(1, "lookup".to_string());
+        cli = Cli::parse_from(args);
     }
 
-    if let Some(action) = cli.action {
-        match action {
-            Action::Count => history::count_history(),
-            Action::List(t) => history::list_history(t.type_, t.sort, t.table, t.column),
-            Action::Lookup(w) => {
-                let online = w.online;
-                let local_first = w.local_first;
-                let exact = w.exact_search;
-                let word = w.word;
-                let path = &w.local;
-                #[cfg(feature = "read-aloud")]
-                let read_aloud = w.read_aloud;
-                if let Some(word_list) = word {
-                    let mut found = false;
-                    word_list.into_iter().for_each(|word| {
-                        if let Err(e) = query(
-                            online,
-                            local_first,
-                            exact,
-                            word,
-                            path,
-                            #[cfg(feature = "read-aloud")]
-                            read_aloud,
-                        ) {
-                            eprintln!("{:?}", e);
-                        } else {
-                            found = true;
-                        }
-                    });
-                    if !found {
-                        std::process::exit(1);
-                    }
-                    Ok(())
-                } else {
-                    repl(
-                        online,
-                        local_first,
-                        exact,
-                        path,
-                        #[cfg(feature = "read-aloud")]
-                        read_aloud,
-                    )
-                }
+    match cli.action.unwrap() {
+        Action::LookUp(look_up) => {
+            let options = DictOptions::default()
+                .prioritize_offline(look_up.local_first)
+                .priortize_online(look_up.use_online)
+                .require_exact_match(look_up.exact_search);
+            #[cfg(feature = "pronunciation")]
+            let options = options.read_aloud(look_up.read_aloud);
+            let local_dicts = if let Some(path) = look_up.local_dicts {
+                path
+            } else {
+                default_local_dict_path().unwrap()
+            };
+            let manager = DictManager::new(local_dicts, options).unwrap();
+            if let Some(words) = look_up.word {
+                words.iter().for_each(|word| manager.query(word));
+            } else {
+                manager.repl();
             }
-            Action::Dicts => list_dicts(),
         }
-    } else {
-        let online = cli.online;
-        let local_first = cli.local_first;
-        let exact = cli.exact_search;
-        let word = cli.word;
-        let path = &cli.local;
-        #[cfg(feature = "read-aloud")]
-        let read_aloud = cli.read_aloud;
-        if let Some(word_list) = word {
-            let mut found = false;
-            word_list.into_iter().for_each(|word| {
-                if let Err(e) = query(
-                    online,
-                    local_first,
-                    exact,
-                    word,
-                    path,
-                    #[cfg(feature = "read-aloud")]
-                    read_aloud,
-                ) {
-                    eprintln!("{:?}", e);
-                } else {
-                    found = true;
-                }
-            });
-            if !found {
-                std::process::exit(1);
-            }
-            Ok(())
-        } else {
-            repl(
-                online,
-                local_first,
-                exact,
-                path,
-                #[cfg(feature = "read-aloud")]
-                read_aloud,
+        Action::Dicts => {
+            let local_dicts = if let Some(path) = cli.local_dicts {
+                path
+            } else {
+                default_local_dict_path().unwrap()
+            };
+            let manager = DictManager::new(local_dicts, DictOptions::default()).unwrap();
+            manager.list_dicts();
+        }
+        Action::Count => {
+            history::count_history_records().unwrap();
+        }
+        Action::List(list) => {
+            history::list_history_records(
+                list.difficulty_level,
+                list.sort_alphabetically,
+                list.format_as_table,
+                list.max_column,
             )
+            .unwrap();
+        }
+        Action::Completion(completion) => {
+            let bin_name = env::args().next().expect("impossible");
+            clap_complete::generate(
+                completion.shell,
+                &mut Cli::command(),
+                bin_name,
+                &mut std::io::stdout(),
+            );
+            std::process::exit(0);
         }
     }
+
+    Ok(())
 }

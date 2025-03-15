@@ -7,11 +7,14 @@ use rusqlite::Connection;
 use std::fs::create_dir;
 use std::path::PathBuf;
 
-/// Allowed diffculty level types of a word.
-pub static ALLOWED_TYPES: [&str; 7] = ["CET4", "CET6", "TOEFL", "IELTS", "GMAT", "GRE", "SAT"];
+use crate::dict::DifficultyLevel;
+
+/// Allowed difficulty levels of a word.
+pub static ALLOWED_DIFFICULTY_LEVELS: [&str; 7] =
+    ["CET4", "CET6", "TOEFL", "IELTS", "GMAT", "GRE", "SAT"];
 
 /// Check and generate cache directory path.
-fn check_cache() -> Result<PathBuf> {
+fn ensure_cache_directory() -> Result<PathBuf> {
     let mut path = cache_dir().with_context(|| "Couldn't find cache directory")?;
     path.push("dioxionary");
     if !path.exists() {
@@ -21,11 +24,11 @@ fn check_cache() -> Result<PathBuf> {
     Ok(path)
 }
 
-/// Add a looked up word to history.
-pub fn add_history(word: &str, types: &Option<Vec<String>>) -> Result<()> {
+/// Inser history record.
+pub fn insert_history_record(word: &str, difficulty_levels: Vec<DifficultyLevel>) -> Result<()> {
     let date = Utc::now().timestamp();
 
-    let path = check_cache()?;
+    let path = ensure_cache_directory()?;
 
     let conn = Connection::open(path)?;
     conn.execute(
@@ -48,19 +51,17 @@ pub fn add_history(word: &str, types: &Option<Vec<String>>) -> Result<()> {
         (word, date),
     )?;
 
-    if let Some(types) = types {
-        types.iter().for_each(|x| {
-            if ALLOWED_TYPES.contains(&x.as_str()) {
-                let sql = format!("UPDATE HISTORY SET {} = 1 WHERE WORD = '{}'", x, word);
-                conn.execute(sql.as_str(), ()).unwrap();
-            }
-        })
-    }
+    difficulty_levels.iter().for_each(|x| {
+        if ALLOWED_DIFFICULTY_LEVELS.contains(&x.as_str()) {
+            let sql = format!("UPDATE HISTORY SET {} = 1 WHERE WORD = '{}'", x, word);
+            conn.execute(sql.as_str(), ()).unwrap();
+        }
+    });
 
     Ok(())
 }
 
-/// List sorted or not history of a word type or all types.
+/// List sorted or not history of a word difficulty level or all levels.
 ///
 /// The output will be like:
 /// txt
@@ -70,14 +71,19 @@ pub fn add_history(word: &str, types: &Option<Vec<String>>) -> Result<()> {
 /// | 220  | 305  | 207   | 203   | 142  | 242 | 126 |
 /// +------+------+-------+-------+------+-----+-----+
 ///
-pub fn list_history(type_: Option<String>, sort: bool, table: bool, column: usize) -> Result<()> {
-    let path = check_cache()?;
+pub fn list_history_records(
+    difficulty_level: Option<DifficultyLevel>,
+    sort_alphabetically: bool,
+    format_as_table: bool,
+    max_column: usize,
+) -> Result<()> {
+    let path = ensure_cache_directory()?;
 
     let mut stmt = "SELECT WORD, DATE FROM HISTORY".to_string();
 
-    if let Some(type_) = type_ {
-        if ALLOWED_TYPES.contains(&type_.as_str()) {
-            stmt.push_str(format!(" WHERE {} = 1", type_).as_str())
+    if let Some(level) = difficulty_level {
+        if ALLOWED_DIFFICULTY_LEVELS.contains(&level.as_str()) {
+            stmt.push_str(format!(" WHERE {} = 1", level).as_str())
         }
     }
 
@@ -88,13 +94,13 @@ pub fn list_history(type_: Option<String>, sort: bool, table: bool, column: usiz
 
     let mut words: Vec<String> = word_iter.filter_map(|x| x.ok()).collect();
 
-    if sort {
+    if sort_alphabetically {
         words.sort();
     }
 
-    if table {
+    if format_as_table {
         let mut table = Table::new();
-        words.chunks(column).for_each(|x| {
+        words.chunks(max_column).for_each(|x| {
             table.add_row(x.iter().map(|x| Cell::new(x)).collect());
         });
         table.printstd();
@@ -107,13 +113,13 @@ pub fn list_history(type_: Option<String>, sort: bool, table: bool, column: usiz
     Ok(())
 }
 
-/// Count the history.
-pub fn count_history() -> Result<()> {
-    let path = check_cache()?;
+/// Count history of a word difficulty level or all levels.
+pub fn count_history_records() -> Result<()> {
+    let path = ensure_cache_directory()?;
 
     let conn = Connection::open(path)?;
 
-    let header: Row = ALLOWED_TYPES
+    let header: Row = ALLOWED_DIFFICULTY_LEVELS
         .into_iter()
         .map(|x| Cell::new(x).with_style(Attr::Bold))
         .collect();
@@ -121,7 +127,7 @@ pub fn count_history() -> Result<()> {
     let mut table: Table = Table::new();
     table.add_row(header);
 
-    let body: Row = ALLOWED_TYPES
+    let body: Row = ALLOWED_DIFFICULTY_LEVELS
         .into_iter()
         .map(|x| {
             let stmt = format!("SELECT COUNT(*) FROM HISTORY WHERE {} = 1", x);

@@ -6,72 +6,81 @@ use std::cmp::min;
 use std::fmt::Debug;
 use std::fs::{read, File};
 use std::io::{prelude::*, BufReader};
-use std::path::PathBuf;
+use std::mem;
+use std::path::Path;
 
 /// The stardict to be looked up.
 #[allow(unused)]
 pub struct StarDict {
-    ifo: Ifo,
-    idx: Idx,
-    dict: Dict,
+    metadata: Metadata,
+    indices: DictIndices,
+    contents: DictContents,
 }
 
 /// A word entry of the stardict.
-pub struct Entry<'a> {
+/// Represents a dictionary entry with word and its translation
+pub struct DictEntry<'a> {
     pub word: &'a str,
-    pub trans: &'a str,
+    pub translation: &'a str,
 }
 
 #[allow(unused)]
 impl<'a> StarDict {
     /// Load stardict from a directory.
-    pub fn new(path: PathBuf) -> Result<StarDict> {
-        let mut ifo: Option<_> = None;
-        let mut idx: Option<_> = None;
-        let mut dict: Option<_> = None;
+    pub fn new<P: AsRef<Path>>(dir_path: P) -> Result<StarDict> {
+        let mut metadata: Option<_> = None;
+        let mut indices: Option<_> = None;
+        let mut contents: Option<_> = None;
 
-        for path in path
+        let dir_path = dir_path.as_ref();
+        for path in dir_path
             .read_dir()
-            .with_context(|| format!("Failed to open directory {:?}", path))?
+            .with_context(|| format!("Failed to open directory {}", dir_path.display()))?
             .flatten()
         {
             let path = path.path();
             if let Some(extension) = path.extension() {
                 match extension.to_str().unwrap() {
-                    "ifo" => ifo = Some(path),
-                    "idx" => idx = Some(path),
-                    "dz" => dict = Some(path),
+                    "ifo" => metadata = Some(path),
+                    "idx" => indices = Some(path),
+                    "dz" => contents = Some(path),
                     _ => (),
                 }
             }
         }
 
-        if ifo.is_none() || idx.is_none() || dict.is_none() {
-            return Err(anyhow!("Stardict file is incomplete in {:?}", path));
+        if metadata.is_none() || indices.is_none() || contents.is_none() {
+            return Err(anyhow!("Stardict file is incomplete in {:?}", dir_path));
         }
 
-        let ifo = Ifo::new(ifo.unwrap())?;
-        let mut idx = Idx::new(idx.unwrap(), ifo.version())?;
-        let dict = Dict::new(dict.unwrap())?;
+        let metadata = Metadata::new(metadata.unwrap())?;
+        let mut indices = DictIndices::new(indices.unwrap(), metadata.version())?;
+        let contents = DictContents::new(contents.unwrap())?;
 
-        idx.items
-            .retain(|(word, offset, size)| offset + size < dict.contents.len());
+        indices
+            .items
+            .retain(|(word, offset, size)| offset + size < contents.str().len());
 
-        Ok(StarDict { ifo, idx, dict })
+        Ok(StarDict {
+            metadata,
+            indices,
+            contents,
+        })
     }
 
     /// Look up a word with fuzzy searching disabled.
-    pub fn exact_lookup(&self, word: &str) -> Option<Entry> {
-        if let Ok(pos) = self.idx.items.binary_search_by(|probe| {
+    /// Performs an exact match lookup for the given word
+    pub fn exact_look_up(&self, word: &str) -> Option<DictEntry<'_>> {
+        if let Ok(pos) = self.indices.items.binary_search_by(|probe| {
             probe
                 .0
                 .to_lowercase()
                 .cmp(&word.to_lowercase())
                 .then(probe.0.as_str().cmp(word))
         }) {
-            let (word, offset, size) = &self.idx.items[pos];
-            let trans = self.dict.get(*offset, *size);
-            Some(Entry { word, trans })
+            let (word, offset, size) = &self.indices.items[pos];
+            let translation = self.contents.get(*offset, *size);
+            Some(DictEntry { word, translation })
         } else {
             None
         }
@@ -105,9 +114,10 @@ impl<'a> StarDict {
     }
 
     /// Look up a word with fuzzy searching enabled.
-    pub fn fuzzy_lookup(&self, word: &str) -> Option<Vec<Entry>> {
+    /// Performs a fuzzy search for similar words using edit distance
+    pub fn fuzzy_look_up(&self, word: &str) -> Option<Vec<DictEntry<'_>>> {
         let distances: Vec<_> = self
-            .idx
+            .indices
             .items
             .iter()
             .filter(|s| !s.0.is_empty())
@@ -115,7 +125,7 @@ impl<'a> StarDict {
             .collect();
         let min_dist = distances.iter().min()?;
         let result = self
-            .idx
+            .indices
             .items
             .iter()
             .filter(|s| !s.0.is_empty())
@@ -123,8 +133,8 @@ impl<'a> StarDict {
             .filter(|(idx, _)| distances[*idx] == *min_dist)
             .map(|(_, x)| {
                 let (word, offset, size) = x;
-                let trans = self.dict.get(*offset, *size);
-                Entry { word, trans }
+                let translation = self.contents.get(*offset, *size);
+                DictEntry { word, translation }
             })
             .collect::<Vec<_>>();
         Some(result)
@@ -132,12 +142,12 @@ impl<'a> StarDict {
 
     /// Get the name of the stardict.
     pub fn dict_name(&'a self) -> &'a str {
-        &self.ifo.bookname
+        &self.metadata.bookname
     }
 
     /// Get the number of the words in the stardict.
-    pub fn wordcount(&self) -> usize {
-        self.ifo.wordcount
+    pub fn word_count(&self) -> usize {
+        self.metadata.wordcount
     }
 }
 
@@ -155,8 +165,9 @@ impl<'a> StarDict {
 /// dicttype=
 #[allow(unused)]
 #[derive(Debug)]
-struct Ifo {
-    version: Version,
+/// Represents StarDict metadata information
+struct Metadata {
+    version: StarDictVersion,
     bookname: String,
     wordcount: usize,
     synwordcount: usize,
@@ -171,18 +182,19 @@ struct Ifo {
     dicttype: String,
 }
 
-#[derive(Debug, Clone, Copy)]
-enum Version {
-    V242,
-    V300,
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum StarDictVersion {
+    V2_4_2,
+    V3_0_0,
     Unknown,
 }
 
 #[allow(unused)]
-impl Ifo {
-    fn new(path: PathBuf) -> Result<Ifo> {
-        let mut ifo = Ifo {
-            version: Version::Unknown,
+impl Metadata {
+    fn new<P: AsRef<Path>>(path: P) -> Result<Metadata> {
+        let path = path.as_ref();
+        let mut metadata = Metadata {
+            version: StarDictVersion::Unknown,
             bookname: String::new(),
             wordcount: 0,
             synwordcount: 0,
@@ -198,7 +210,8 @@ impl Ifo {
         };
 
         for line in BufReader::new(
-            File::open(&path).with_context(|| format!("Failed to open ifo file {:?}", path))?,
+            File::open(path)
+                .with_context(|| format!("Failed to open ifo file {}", path.display()))?,
         )
         .lines()
         {
@@ -208,91 +221,97 @@ impl Ifo {
                 let val = String::from(&line[id + 1..]);
                 match key {
                     "version" => {
-                        ifo.version = if val == "2.4.2" {
-                            Version::V242
+                        metadata.version = if val == "2.4.2" {
+                            StarDictVersion::V2_4_2
                         } else if val == "3.0.0" {
-                            Version::V300
+                            StarDictVersion::V3_0_0
                         } else {
-                            Version::Unknown
+                            StarDictVersion::Unknown
                         }
                     }
-                    "bookname" => ifo.bookname = val,
+                    "bookname" => metadata.bookname = val,
                     "wordcount" => {
-                        ifo.wordcount = val
+                        metadata.wordcount = val
                             .parse()
                             .with_context(|| format!("Failed to parse info file {:?}", path))?
                     }
                     "synwordcount" => {
-                        ifo.synwordcount = val
+                        metadata.synwordcount = val
                             .parse()
                             .with_context(|| format!("Failed to parse info file {:?}", path))?
                     }
                     "idxfilesize" => {
-                        ifo.idxfilesize = val
+                        metadata.idxfilesize = val
                             .parse()
                             .with_context(|| format!("Failed to parse info file {:?}", path))?
                     }
                     "idxoffsetbits" => {
-                        ifo.idxoffsetbits = val
+                        metadata.idxoffsetbits = val
                             .parse()
                             .with_context(|| format!("Failed to parse info file {:?}", path))?
                     }
-                    "author" => ifo.author = val,
-                    "email" => ifo.email = val,
-                    "website" => ifo.website = val,
-                    "description" => ifo.description = val,
-                    "date" => ifo.date = val,
-                    "sametypesequence" => ifo.sametypesequence = val,
-                    "dicttype" => ifo.dicttype = val,
+                    "author" => metadata.author = val,
+                    "email" => metadata.email = val,
+                    "website" => metadata.website = val,
+                    "description" => metadata.description = val,
+                    "date" => metadata.date = val,
+                    "sametypesequence" => metadata.sametypesequence = val,
+                    "dicttype" => metadata.dicttype = val,
                     _ => (),
                 };
             }
         }
-        Ok(ifo)
+        Ok(metadata)
     }
 
-    fn version(&self) -> Version {
+    fn version(&self) -> StarDictVersion {
         self.version
     }
 }
 
 #[allow(unused)]
-struct Dict {
-    contents: String,
-}
+/// Contains the actual dictionary content data
+struct DictContents(String);
 
 #[allow(unused)]
-impl<'a> Dict {
-    fn new(path: PathBuf) -> Result<Dict> {
+impl<'a> DictContents {
+    fn new<P: AsRef<Path>>(path: P) -> Result<DictContents> {
+        let path = path.as_ref();
         let s =
-            read(&path).with_context(|| format!("Failed to open stardict directory {:?}", path))?;
+            read(path).with_context(|| format!("Failed to open stardict directory {:?}", path))?;
         let mut d = GzDecoder::new(s.as_slice());
         let mut contents = String::new();
         d.read_to_string(&mut contents).with_context(|| {
             format!("Failed to open stardict directory {:?} as dz format", path)
         })?;
-        Ok(Dict { contents })
+        Ok(DictContents(contents))
+    }
+
+    fn str(&'a self) -> &'a str {
+        &self.0
     }
 
     fn get(&'a self, offset: usize, size: usize) -> &'a str {
-        &self.contents[offset..offset + size]
+        &self.0[offset..offset + size]
     }
 }
 
 #[allow(unused)]
 #[derive(Debug)]
-struct Idx {
+/// Represents the dictionary index structure
+struct DictIndices {
     items: Vec<(String, usize, usize)>,
 }
 
 #[allow(unused)]
-impl Idx {
-    fn read_bytes<const N: usize, T>(path: PathBuf) -> Result<Vec<(String, usize, usize)>>
+impl DictIndices {
+    fn read_bytes<T, const N: usize, P: AsRef<Path>>(path: P) -> Result<Vec<(String, usize, usize)>>
     where
         T: FromBytes<N> + TryInto<usize>,
         <T as TryInto<usize>>::Error: Debug,
     {
-        let f = File::open(&path).with_context(|| format!("Failed to open idx file {:?}", path))?;
+        let path = path.as_ref();
+        let f = File::open(path).with_context(|| format!("Failed to open idx file {:?}", path))?;
         let mut f = BufReader::new(f);
 
         let mut items: Vec<_> = Vec::new();
@@ -336,15 +355,18 @@ impl Idx {
         Ok(items)
     }
 
-    fn new(path: PathBuf, version: Version) -> Result<Idx> {
+    fn new<P: AsRef<Path>>(path: P, version: StarDictVersion) -> Result<DictIndices> {
+        let path = path.as_ref();
         match version {
-            Version::V242 => Ok(Idx {
-                items: Idx::read_bytes::<4, u32>(path)?,
+            StarDictVersion::V2_4_2 => Ok(DictIndices {
+                items: DictIndices::read_bytes::<u32, { mem::size_of::<u32>() }, _>(path)?,
             }),
-            Version::V300 => Ok(Idx {
-                items: Idx::read_bytes::<8, u64>(path)?,
+            StarDictVersion::V3_0_0 => Ok(DictIndices {
+                items: DictIndices::read_bytes::<u64, { mem::size_of::<u64>() }, _>(path)?,
             }),
-            Version::Unknown => Err(anyhow!("Wrong stardict version in idx file {:?}", path)),
+            StarDictVersion::Unknown => {
+                Err(anyhow!("Wrong stardict version in idx file {:?}", path))
+            }
         }
     }
 }
@@ -357,24 +379,24 @@ mod test {
 
     #[test]
     fn load_stardict() {
-        let stardict = StarDict::new("./stardict-heritage/cdict-gb".into()).unwrap();
+        let stardict = StarDict::new("./stardict-heritage/cdict-gb").unwrap();
         assert_eq!(stardict.dict_name(), "CDICT5英汉辞典");
-        assert_eq!(stardict.wordcount(), 57510);
+        assert_eq!(stardict.word_count(), 57510);
     }
 
     #[test]
     fn lookup_offline() {
-        let stardict = StarDict::new("./stardict-heritage/cdict-gb".into()).unwrap();
-        stardict.exact_lookup("rust").unwrap();
+        let stardict = StarDict::new("./stardict-heritage/cdict-gb").unwrap();
+        stardict.exact_look_up("rust").unwrap();
     }
 
     #[test]
     fn lookup_offline_fuzzy() {
-        let stardict = StarDict::new("./stardict-heritage/cdict-gb".into()).unwrap();
+        let stardict = StarDict::new("./stardict-heritage/cdict-gb").unwrap();
         let misspell = ["rst", "cago", "crade"];
         let correct = ["rust", "cargo", "crate"];
         for (mis, cor) in izip!(misspell, correct) {
-            let fuzzy = stardict.fuzzy_lookup(mis).unwrap();
+            let fuzzy = stardict.fuzzy_look_up(mis).unwrap();
             fuzzy.iter().find(|w| w.word == cor).unwrap();
         }
     }
