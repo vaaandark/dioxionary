@@ -444,7 +444,7 @@ dependencies = [
 
 [[package]]
 name = "dioxionary"
-version = "1.0.5"
+version = "1.1.0"
 dependencies = [
  "anyhow",
  "chrono",
