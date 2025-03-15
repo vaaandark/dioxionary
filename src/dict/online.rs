@@ -1,38 +1,99 @@
-//! Look up words from the Internet.
-#[cfg(feature = "read-aloud")]
-use rodio::{Decoder, OutputStream, Sink};
-#[cfg(feature = "read-aloud")]
-use std::io::Cursor;
-
 use anyhow::{anyhow, Context, Result};
 use itertools::{
     EitherOrBoth::{Both, Left, Right},
     Itertools,
 };
 use scraper::{Html, Selector};
-use std::fmt;
 
-/// Generate url for looking up.
-fn gen_url(word: &str) -> String {
+use super::{Dict, LookUpResult, LookUpResultItem};
+
+#[derive(Default)]
+pub struct OnlineDict;
+
+fn look_up(word: &str) -> Result<LookUpResult> {
+    let runtime = tokio::runtime::Builder::new_current_thread()
+        .enable_all()
+        .build()
+        .unwrap();
+
+    runtime.block_on(async {
+        let html = fetch_html_content(word).await?;
+        let is_en = is_english(word);
+        let translation_direction = if is_en {
+            parse_english_to_chinese
+        } else {
+            parse_chinese_to_english
+        };
+        let translation = translation_direction(&html)?.trim().to_string();
+        // find nothing about the word
+        if translation.is_empty() {
+            Err(anyhow!("Found nothing in online dict"))
+        } else {
+            let difficulty_levels = if is_en {
+                extract_difficulty_levels(&html)?
+            } else {
+                vec![]
+            };
+            let word = word.to_owned();
+            Ok(LookUpResult::Exact(
+                LookUpResultItem::new_with_difficulty_levels(word, translation, difficulty_levels),
+            ))
+        }
+    })
+}
+
+impl Dict for OnlineDict {
+    fn name(&self) -> &str {
+        "Youdao"
+    }
+
+    fn is_online(&self) -> bool {
+        true
+    }
+
+    fn supports_fuzzy_search(&self) -> bool {
+        false
+    }
+
+    fn look_up(&self, _: bool, word: &str) -> LookUpResult {
+        if let Ok(result) = look_up(word) {
+            result
+        } else {
+            eprintln!(
+                "{}: {}",
+                self.name(),
+                anyhow::anyhow!("Failed to search online dict")
+            );
+            LookUpResult::None
+        }
+    }
+
+    fn word_count(&self) -> usize {
+        0
+    }
+}
+
+/// build url for looking up.
+fn build_translation_url(word: &str) -> String {
     format!("https://www.youdao.com/result?word={}&lang=en", word)
 }
 
 /// Is an English word?
-fn is_enword(word: &str) -> bool {
+fn is_english(word: &str) -> bool {
     word.as_bytes()
         .iter()
         .all(|x| x.is_ascii_alphabetic() || x.is_ascii_whitespace())
 }
 
-/// Get web dictionary html by word.
-async fn get_html(word: &str) -> Result<Html> {
+/// fetch web dictionary html by word.
+async fn fetch_html_content(word: &str) -> Result<Html> {
     static APP_USER_AGENT: &str =
         "Mozilla/5.0 (X11; Linux x86_64; rv:126.0) Gecko/20100101 Firefox/126.0";
     let client = reqwest::Client::builder()
         .user_agent(APP_USER_AGENT)
         .build()
         .with_context(|| "Failed build up a client for reqwest")?;
-    let url = gen_url(word);
+    let url = build_translation_url(word);
     let res = client
         .get(&url)
         .send()
@@ -46,7 +107,7 @@ async fn get_html(word: &str) -> Result<Html> {
 }
 
 /// Lookup words by Chinese meaning.
-fn zh2en(html: &Html) -> Result<String> {
+fn parse_chinese_to_english(html: &Html) -> Result<String> {
     let mut res = String::new();
     let trans = Selector::parse("ul.basic")
         .map_err(|_| anyhow!("Failed to select the fields of ul.basic in the HTML body"))?;
@@ -60,7 +121,7 @@ fn zh2en(html: &Html) -> Result<String> {
 }
 
 /// Lookup words by English word.
-fn en2zh(html: &Html) -> Result<String> {
+fn parse_english_to_chinese(html: &Html) -> Result<String> {
     let mut res = String::new();
     let phonetic = Selector::parse(".per-phone")
         .map_err(|_| anyhow!("Failed select the fields of .per-phone in the HTML body"))?;
@@ -102,7 +163,7 @@ fn en2zh(html: &Html) -> Result<String> {
 }
 
 /// Get the diffculty level of the word from html.
-fn get_exam_type(html: &Html) -> Result<Vec<String>> {
+fn extract_difficulty_levels(html: &Html) -> Result<Vec<String>> {
     let types = Selector::parse(".exam_type-value")
         .map_err(|_| anyhow!("Failed to select the fields of .exam_type-value in the HTML body"))?;
     let mut res: Vec<String> = Vec::new();
@@ -115,92 +176,29 @@ fn get_exam_type(html: &Html) -> Result<Vec<String>> {
     Ok(res)
 }
 
-/// Word item from the web dictionary.
-pub struct WordItem {
-    /// The word being looked up.
-    pub word: String,
-    /// Is an English word?
-    pub is_en: bool,
-    /// The meaning or the translation of the word.
-    pub trans: String,
-    /// The diffculty level of the word(can be none or more than one).
-    pub types: Option<Vec<String>>,
-}
-
-impl WordItem {
-    /// Build a word item by looking up from the web dictionary.
-    pub fn lookup(word: &str) -> Result<WordItem> {
-        let runtime = tokio::runtime::Builder::new_current_thread()
-            .enable_all()
-            .build()
-            .unwrap();
-
-        runtime.block_on(async {
-            let html = get_html(word).await?;
-            let is_en = is_enword(word);
-            let dirction = if is_en { en2zh } else { zh2en };
-            let trans = dirction(&html)?.trim().to_string();
-            // find nothing about the word
-            if trans.is_empty() {
-                Err(anyhow!("Found nothing in online dict"))
-            } else {
-                let types = if is_en {
-                    Some(get_exam_type(&html)?)
-                } else {
-                    None
-                };
-                let word = word.to_owned();
-                Ok(WordItem {
-                    word,
-                    is_en,
-                    trans,
-                    types,
-                })
-            }
-        })
-    }
-}
-
-impl fmt::Display for WordItem {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let mut types_contents = String::new();
-        if let Some(types) = &self.types {
-            types_contents.push('\n');
-            types
-                .iter()
-                .for_each(|x| types_contents.push_str(&format!("<{}> ", x)))
-        };
-        write!(f, "{}\n{}{}", self.word, self.trans.trim(), types_contents)
-    }
-}
-
-/// Play word pronunciation.
-#[cfg(feature = "read-aloud")]
-pub fn read_aloud(word: &str) -> Result<()> {
-    let (_stream, stream_handle) = OutputStream::try_default().unwrap();
-    let url = format!("https://dict.youdao.com/dictvoice?audio={}&type=1", word);
-    let response = reqwest::blocking::get(url)?;
-    let inner = response.bytes()?;
-    if let Ok(source) = Decoder::new(Cursor::new(inner)) {
-        if let Ok(sink) = Sink::try_new(&stream_handle) {
-            sink.append(source);
-            sink.sleep_until_end();
-        }
-    }
-    Ok(())
-}
-
 #[cfg(test)]
 mod test {
-    use super::WordItem;
+    use core::panic;
+
+    use crate::dict::{Dict, LookUpResult};
+
+    use super::OnlineDict;
 
     #[test]
-    fn lookup_online_by_english() {
-        WordItem::lookup("rust").unwrap();
+    fn look_up_online_by_english() {
+        if let LookUpResult::Exact(e) = OnlineDict::default().look_up(false, "rust") {
+            println!("{}", e);
+        } else {
+            panic!("Failed to look up online by english");
+        }
     }
 
     #[test]
-    fn lookup_online_by_chinese() {
-        WordItem::lookup("铁锈").unwrap();
+    fn look_up_online_by_chinese() {
+        if let LookUpResult::Exact(e) = OnlineDict::default().look_up(false, "铁锈") {
+            println!("{}", e);
+        } else {
+            panic!("Failed to look up online by chinese");
+        }
     }
 }

@@ -1,4 +1,6 @@
 //! Dioxionary command line parameters.
+use std::path::PathBuf;
+
 pub use clap::{Args, Parser};
 use clap_complete::Shell;
 
@@ -9,7 +11,7 @@ use clap_complete::Shell;
   When no subcommand is specified, the default is 'lookup'.
   you can list all records:
     dioxionary list
-  you can also list the following types:
+  you can also list the following difficulty level records:
     'CET4', 'CET6', 'TOEFL', 'IELTS', 'GMAT', 'GRE', 'SAT'
   you can count all records:
     dioxionary count
@@ -24,11 +26,11 @@ pub struct Cli {
 
     /// Specify local dictionary.
     #[arg(short, long)]
-    pub local: Option<String>,
+    pub local_dicts: Option<PathBuf>,
 
     /// Use online dictionary.
     #[arg(short = 'x', long, default_value_t = false)]
-    pub online: bool,
+    pub use_online: bool,
 
     /// Try offline dictionary first, then the online.
     #[arg(short = 'L', long, default_value_t = true)]
@@ -39,12 +41,9 @@ pub struct Cli {
     pub exact_search: bool,
 
     /// Play word pronunciation.
+    #[cfg(feature = "pronunciation")]
     #[arg(short, long, default_value_t = false)]
     pub read_aloud: bool,
-
-    /// Generate shell completion scripts.
-    #[arg(short, long, value_enum, value_name = "SHELL")]
-    pub completions: Option<Shell>,
 
     /// The word being looked up.
     pub word: Option<Vec<String>>,
@@ -53,29 +52,33 @@ pub struct Cli {
 /// Dioxionary subcommands.
 #[derive(clap::Subcommand, Debug)]
 pub enum Action {
-    /// Lookup the following word, default offline dictionary.
-    Lookup(Lookup),
+    /// LookUp the following word, default offline dictionary.
+    #[command(name = "lookup")]
+    LookUp(LookUp),
 
-    /// List the specific types of records.
+    /// List the specific difficulty level records.
     List(List),
 
-    /// Count the number of each type.
+    /// Count the number of each difficulty level records.
     Count,
 
     /// Display list of available dictionaries and exit.
     Dicts,
+
+    /// Generate shell completion scripts.
+    Completion(Completion),
 }
 
 /// Subcommand line parameters for looking up words.
 #[derive(Args, Debug)]
-pub struct Lookup {
+pub struct LookUp {
     /// Specify local dictionary.
     #[arg(short, long)]
-    pub local: Option<String>,
+    pub local_dicts: Option<PathBuf>,
 
     /// Use online dictionary.
     #[arg(short = 'x', long, default_value_t = false)]
-    pub online: bool,
+    pub use_online: bool,
 
     /// Try offline dictionary first, then the online.
     #[arg(short = 'L', long, default_value_t = true)]
@@ -86,6 +89,7 @@ pub struct Lookup {
     pub exact_search: bool,
 
     /// Play word pronunciation.
+    #[cfg(feature = "pronunciation")]
     #[arg(short, long, default_value_t = false)]
     pub read_aloud: bool,
 
@@ -98,16 +102,22 @@ pub struct Lookup {
 pub struct List {
     /// Sort lexicographically.
     #[arg(short, long, default_value_t = false)]
-    pub sort: bool,
+    pub sort_alphabetically: bool,
 
     /// Output to a table.
     #[arg(short, long, default_value_t = false)]
-    pub table: bool,
+    pub format_as_table: bool,
 
     /// The number of columns in the table.
     #[arg(short, long, default_value_t = 5, requires("table"))]
-    pub column: usize,
+    pub max_column: usize,
 
     /// The difficulty level of the word.
-    pub type_: Option<String>,
+    pub difficulty_level: Option<String>,
+}
+
+/// Subcommand line parameters for shell completion.
+#[derive(Args, Debug)]
+pub struct Completion {
+    pub shell: Shell,
 }
