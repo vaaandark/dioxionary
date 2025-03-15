@@ -40,7 +40,7 @@ impl DictManager {
 
         dicts
             .into_iter()
-            .find_map(|dict| match dict.look_up(enable_fuzzy, &word) {
+            .find_map(|dict| match dict.look_up(enable_fuzzy, word) {
                 LookUpResult::None => None,
                 result => Some(result),
             })
@@ -87,11 +87,7 @@ impl DictManager {
                     .interact_on_opt(&Term::stderr())
                     .unwrap()
                 {
-                    if let Some(item) = items.into_iter().nth(selection) {
-                        Some(item)
-                    } else {
-                        None
-                    }
+                    items.into_iter().nth(selection)
                 } else {
                     None
                 }
