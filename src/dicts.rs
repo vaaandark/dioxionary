@@ -4,7 +4,7 @@ use crate::{
     dict::{offline::OfflineDict, online::OnlineDict, Dict, LookUpResult, LookUpResultItem},
     history,
 };
-use anyhow::{anyhow, Context, Result};
+use anyhow::{Context, Result};
 use dialoguer::{console::Term, theme::ColorfulTheme, Select};
 use prettytable::{Attr, Cell, Row, Table};
 use rustyline::error::ReadlineError;
@@ -17,9 +17,13 @@ pub struct DictManager {
 }
 
 impl DictManager {
-    pub fn new<P: AsRef<Path>>(offline_dict_path: P, options: DictOptions) -> Result<Self> {
-        let path = offline_dict_path.as_ref();
-        let offline_dicts = load_offline_dicts(path)?;
+    pub fn new<P: AsRef<Path>>(offline_dict_path: Option<P>, options: DictOptions) -> Result<Self> {
+        let offline_dicts = if let Some(offline_dict_path) = offline_dict_path {
+            let path = offline_dict_path.as_ref();
+            load_offline_dicts(path)?
+        } else {
+            vec![]
+        };
         let online_dict = Box::new(OnlineDict) as Box<dyn Dict>;
         Ok(Self {
             online_dict,
@@ -263,7 +267,7 @@ impl DictOptions {
     }
 }
 
-pub fn default_local_dict_path() -> Result<PathBuf> {
+pub fn default_local_dict_path() -> Option<PathBuf> {
     let dioxionary_dir = dirs::config_dir()
         .map(|dir| dir.join("dioxionary"))
         .filter(|dir| dir.is_dir());
@@ -273,8 +277,8 @@ pub fn default_local_dict_path() -> Result<PathBuf> {
         .filter(|dir| dir.is_dir());
 
     match (&dioxionary_dir, &stardict_compatible_dir) {
-        (Some(dir), _) => Ok(dir.to_path_buf()),
-        (None, Some(dir)) => Ok(dir.to_path_buf()),
-        (None, None) => Err(anyhow!("Couldn't find configuration directory")),
+        (Some(dir), _) => Some(dir.to_path_buf()),
+        (None, Some(dir)) => Some(dir.to_path_buf()),
+        (None, None) => None,
     }
 }
