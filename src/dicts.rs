@@ -1,7 +1,7 @@
 #[cfg(feature = "pronunciation")]
 use crate::pronunciation;
 use crate::{
-    dict::{offline::OfflineDict, online::OnlineDict, Dict, LookUpResult},
+    dict::{offline::OfflineDict, online::OnlineDict, Dict, LookUpResult, LookUpResultItem},
     history,
 };
 use anyhow::{anyhow, Context, Result};
@@ -28,23 +28,40 @@ impl DictManager {
         })
     }
 
-    fn look_up(&self, options: &DictOptions, word: &str) -> LookUpResult {
-        let enable_fuzzy = !options.exact_match_only;
-
-        let mut dicts = self.offline_dicts.iter().collect::<Vec<_>>();
-        if options.prioritize_online_dict {
-            dicts.insert(0, &self.online_dict);
-        } else {
-            dicts.push(&self.online_dict);
-        }
-
-        dicts
-            .into_iter()
-            .find_map(|dict| match dict.look_up(enable_fuzzy, word) {
+    fn find_exact_match<'a>(
+        &'a self,
+        mut dicts: impl Iterator<Item = &'a &'a Box<dyn Dict>>,
+        word: &str,
+    ) -> Option<LookUpResultItem> {
+        dicts.find_map(|dict| {
+            let result = dict.look_up(false, word);
+            match result {
                 LookUpResult::None => None,
-                result => Some(result),
+                LookUpResult::Exact(item) => Some(item),
+                LookUpResult::Fuzzy(_) => None,
+            }
+        })
+    }
+
+    // TODO: fuzzily look up all dictionaries and rank them
+    fn find_fuzzy_matches<'a>(
+        &'a self,
+        mut dicts: impl Iterator<Item = &'a &'a Box<dyn Dict>>,
+        word: &str,
+    ) -> Vec<LookUpResultItem> {
+        dicts
+            .find_map(|dict| {
+                if !dict.supports_fuzzy_search() {
+                    return None;
+                }
+                let result = dict.look_up(true, word);
+                match result {
+                    LookUpResult::None => None,
+                    LookUpResult::Exact(item) => Some(vec![item]),
+                    LookUpResult::Fuzzy(items) => Some(items),
+                }
             })
-            .unwrap_or(LookUpResult::None)
+            .unwrap_or_default()
     }
 
     pub fn repl(&self) {
@@ -72,26 +89,37 @@ impl DictManager {
             (None, word) => (self.options, word.to_owned()),
         };
 
-        let results = self.look_up(&options, &word);
-        let item = match results {
-            LookUpResult::None => {
-                eprintln!("Found nothing in the dictionaries");
+        let enable_fuzzy = !options.exact_match_only;
+
+        let mut dicts = self.offline_dicts.iter().collect::<Vec<_>>();
+        if options.prioritize_online_dict {
+            dicts.insert(0, &self.online_dict);
+        } else {
+            dicts.push(&self.online_dict);
+        }
+
+        let item = if let Some(exact_result) = self.find_exact_match(dicts.iter(), &word) {
+            Some(exact_result)
+        } else if enable_fuzzy {
+            println!("Fuzzy search enabled");
+            let fuzzy_results = self.find_fuzzy_matches(dicts.iter(), &word);
+            if let Some(selection) = Select::with_theme(&ColorfulTheme::default())
+                .items(
+                    &fuzzy_results
+                        .iter()
+                        .map(|w| w.word.as_str())
+                        .collect::<Vec<&str>>(),
+                )
+                .default(0)
+                .interact_on_opt(&Term::stderr())
+                .unwrap()
+            {
+                fuzzy_results.into_iter().nth(selection)
+            } else {
                 None
             }
-            LookUpResult::Exact(item) => Some(item),
-            LookUpResult::Fuzzy(items) => {
-                println!("Fuzzy search enabled");
-                if let Some(selection) = Select::with_theme(&ColorfulTheme::default())
-                    .items(&items.iter().map(|w| w.word.as_str()).collect::<Vec<&str>>())
-                    .default(0)
-                    .interact_on_opt(&Term::stderr())
-                    .unwrap()
-                {
-                    items.into_iter().nth(selection)
-                } else {
-                    None
-                }
-            }
+        } else {
+            None
         };
 
         if let Some(item) = item {
@@ -105,6 +133,8 @@ impl DictManager {
                     eprintln!("Failed to read aloud: {}", e);
                 }
             }
+        } else {
+            eprintln!("No result found");
         }
     }
 
