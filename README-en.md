@@ -9,8 +9,9 @@ Look up and memorize all words in terminal **offline** / **online**!
 
 ## Prerequisites
 
-- sqlite3
 - openssl
+
+> If using musl build, there is no openssl dependency.
 
 ## Installation
 
@@ -18,12 +19,18 @@ Look up and memorize all words in terminal **offline** / **online**!
 
 It is recommended to download the prebuilt binary file for your platform from the [Github Release](https://github.com/vaaandark/dioxionary/releases) on the right side.
 
-Alternatively, you can also download the latest build binaries, including Linux and Windows versions, from the [GitHub Actions](https://github.com/vaaandark/dioxionary/actions?query=workflow%3A%22CI+build%22+actor%3Avaaandark+branch%3Amaster+event%3Apush+is%3Asuccess).
+Alternatively, you can also download the latest build binaries, including many versions, from the [GitHub Actions](https://github.com/vaaandark/dioxionary/actions?query=workflow%3A%22CI+build%22+actor%3Avaaandark+branch%3Amaster+event%3Apush+is%3Asuccess).
 
 ### Compile from source
 
 ```console
 cargo install dioxionary
+```
+
+If you want to enable the pronunciation feature, use:
+
+```console
+cargo install dioxionary --features pronunciation
 ```
 
 ## Usage
@@ -100,6 +107,10 @@ $ dioxionary -x <DICTDIR> <WORD>
 The dictionary file path can be specified with the `-l` or `--local` option.
 
 Use the `-L` or `--local-first` option to use the network dictionary after a local lookup fails. It is recommended to add `alias rl='dioxionary -l'` in the shell configuration file.
+
+Use -r or prefix the word with ~ to pronounce the word.
+
+> Prerequisite: The pronunciation feature was enabled during build.
 
 ### Multiple dictionary support
 

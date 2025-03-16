@@ -9,8 +9,9 @@
 
 ## 依赖
 
-- sqlite3
 - openssl
+
+> 如果使用 musl 构建则没有 openssl 依赖
 
 ## 安装
 
@@ -18,12 +19,18 @@
 
 推荐从右侧的 [Github Release](https://github.com/vaaandark/dioxionary/releases) 下载对应平台的二进制文件。
 
-也可以到 [GitHub Actions](https://github.com/vaaandark/dioxionary/actions?query=workflow%3A%22CI+build%22+actor%3Avaaandark+branch%3Amaster+event%3Apush+is%3Asuccess) 下载最新构建的二进制，包含 Linux 和 Windows 版本。
+也可以到 [GitHub Actions](https://github.com/vaaandark/dioxionary/actions?query=workflow%3A%22CI+build%22+actor%3Avaaandark+branch%3Amaster+event%3Apush+is%3Asuccess) 下载最新构建的二进制，包含多种版本。
 
 ### 自行编译
 
 ```console
 cargo install dioxionary
+```
+
+如果想开启朗读功能，则使用：
+
+```console
+cargo install dioxionary --features pronunciation
 ```
 
 ## 使用
@@ -100,6 +107,10 @@ $ dioxionary -x <DICTDIR> <WORD>
 可以使用 `-l` 或 `--local` 选项指定词典文件路径。
 
 使用 `-L` 或 `--local-first` 选项则会在本地查询失败后使用网络词典。推荐在 shell 配置文件中加入 `alias rl='dioxionary -l'`。
+
+使用 `-r` 或者输入单词时前缀包含 `~` 可以朗读单词。
+
+> 前提是构建时打开了 pronunciation 特性。
 
 ### 多字典支持
 
