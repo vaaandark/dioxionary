@@ -106,7 +106,7 @@ $ dioxionary -x <DICTDIR> <WORD>
 
 The dictionary file path can be specified with the `-l` or `--local` option.
 
-Use the `-L` or `--local-first` option to use the network dictionary after a local lookup fails. It is recommended to add `alias rl='dioxionary -l'` in the shell configuration file.
+Use the `-L` or `--local-first` option to use the network dictionary after a local lookup fails. It is recommended to add `alias rl='dioxionary -L'` in the shell configuration file.
 
 Use -r or prefix the word with ~ to pronounce the word.
 

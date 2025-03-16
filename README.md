@@ -106,7 +106,7 @@ $ dioxionary -x <DICTDIR> <WORD>
 
 可以使用 `-l` 或 `--local` 选项指定词典文件路径。
 
-使用 `-L` 或 `--local-first` 选项则会在本地查询失败后使用网络词典。推荐在 shell 配置文件中加入 `alias rl='dioxionary -l'`。
+使用 `-L` 或 `--local-first` 选项则会在本地查询失败后使用网络词典。推荐在 shell 配置文件中加入 `alias rl='dioxionary -L'`。
 
 使用 `-r` 或者输入单词时前缀包含 `~` 可以朗读单词。
 
