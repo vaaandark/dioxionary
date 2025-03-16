@@ -27,9 +27,9 @@ fn main() -> Result<()> {
             #[cfg(feature = "pronunciation")]
             let options = options.read_aloud(look_up.read_aloud);
             let local_dicts = if let Some(path) = look_up.local_dicts {
-                path
+                Some(path)
             } else {
-                default_local_dict_path().unwrap()
+                default_local_dict_path()
             };
             let manager = DictManager::new(local_dicts, options).unwrap();
             if let Some(words) = look_up.word {
@@ -40,9 +40,9 @@ fn main() -> Result<()> {
         }
         Action::Dicts => {
             let local_dicts = if let Some(path) = cli.local_dicts {
-                path
+                Some(path)
             } else {
-                default_local_dict_path().unwrap()
+                default_local_dict_path()
             };
             let manager = DictManager::new(local_dicts, DictOptions::default()).unwrap();
             manager.list_dicts();
