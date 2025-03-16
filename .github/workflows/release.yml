@@ -26,7 +26,7 @@ jobs:
           - os: ubuntu-latest
             name: dioxionary_asound
             target: x86_64-unknown-linux-gnu
-            exe: dioxionary_asound
+            exe: dioxionary
             cross: false
             features: --features pronunciation
           - os: ubuntu-latest
@@ -51,7 +51,7 @@ jobs:
           - os: macos-latest
             name: dioxionary_asound
             target: x86_64-apple-darwin
-            exe: dioxionary_asound
+            exe: dioxionary
             cross: false
             features: --features pronunciation
           
@@ -64,7 +64,7 @@ jobs:
           - os: macos-latest
             name: dioxionary_asound
             target: aarch64-apple-darwin
-            exe: dioxionary_asound
+            exe: dioxionary
             cross: false
             features: --features pronunciation
 
