@@ -150,7 +150,7 @@ pub struct DictOptions {
     pub read_aloud: bool,
 }
 
-fn split_non_alphanumberic_prefix(s: &str) -> (&str, &str) {
+fn split_non_alphanumeric_prefix(s: &str) -> (&str, &str) {
     for (i, c) in s.char_indices() {
         if c.is_alphanumeric() {
             return (&s[..i], &s[i..]);
@@ -165,13 +165,13 @@ mod tests {
 
     #[test]
     fn test_split() {
-        assert_eq!(split_non_alphanumberic_prefix("123abc"), ("", "123abc"));
-        assert_eq!(split_non_alphanumberic_prefix("!!hello"), ("!!", "hello"));
-        assert_eq!(split_non_alphanumberic_prefix("abcdef"), ("", "abcdef"));
-        assert_eq!(split_non_alphanumberic_prefix("***123"), ("***", "123"));
-        assert_eq!(split_non_alphanumberic_prefix(""), ("", ""));
-        assert_eq!(split_non_alphanumberic_prefix("á123"), ("", "á123"));
-        assert_eq!(split_non_alphanumberic_prefix("&&&ábc"), ("&&&", "ábc"));
+        assert_eq!(split_non_alphanumeric_prefix("123abc"), ("", "123abc"));
+        assert_eq!(split_non_alphanumeric_prefix("!!hello"), ("!!", "hello"));
+        assert_eq!(split_non_alphanumeric_prefix("abcdef"), ("", "abcdef"));
+        assert_eq!(split_non_alphanumeric_prefix("***123"), ("***", "123"));
+        assert_eq!(split_non_alphanumeric_prefix(""), ("", ""));
+        assert_eq!(split_non_alphanumeric_prefix("á123"), ("", "á123"));
+        assert_eq!(split_non_alphanumeric_prefix("&&&ábc"), ("&&&", "ábc"));
     }
 }
 
@@ -189,7 +189,7 @@ impl Default for DictOptions {
 
 impl DictOptions {
     fn parse_prefixed_word(word: &str) -> (Option<Self>, String) {
-        let (prefix, word) = split_non_alphanumberic_prefix(word);
+        let (prefix, word) = split_non_alphanumeric_prefix(word);
         if prefix.is_empty() {
             (None, word.to_owned())
         } else {
@@ -211,7 +211,7 @@ impl DictOptions {
         }
     }
 
-    pub fn priortize_online(mut self, prioritize: bool) -> Self {
+    pub fn prioritize_online(mut self, prioritize: bool) -> Self {
         self.prioritize_online_dict = prioritize;
         self
     }

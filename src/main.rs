@@ -22,7 +22,7 @@ fn main() -> Result<()> {
         Action::LookUp(look_up) => {
             let options = DictOptions::default()
                 .prioritize_offline(look_up.local_first)
-                .priortize_online(look_up.use_online)
+                .prioritize_online(look_up.use_online)
                 .require_exact_match(look_up.exact_search);
             #[cfg(feature = "pronunciation")]
             let options = options.read_aloud(look_up.read_aloud);

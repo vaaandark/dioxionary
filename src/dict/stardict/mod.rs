@@ -395,8 +395,8 @@ mod test {
         let stardict = StarDict::new("./stardict-heritage/cdict-gb").unwrap();
         let misspell = ["rst", "cago", "crade"];
         let correct = ["rust", "cargo", "crate"];
-        for (mis, cor) in izip!(misspell, correct) {
-            let fuzzy = stardict.fuzzy_look_up(mis).unwrap();
+        for (miss, cor) in izip!(misspell, correct) {
+            let fuzzy = stardict.fuzzy_look_up(miss).unwrap();
             fuzzy.iter().find(|w| w.word == cor).unwrap();
         }
     }
