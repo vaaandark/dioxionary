@@ -73,11 +73,11 @@ pub enum Action {
 #[derive(Args, Debug)]
 pub struct LookUp {
     /// Specify local dictionary.
-    #[arg(short, long)]
+    #[arg(short, long, name = "local")]
     pub local_dicts: Option<PathBuf>,
 
     /// Use online dictionary.
-    #[arg(short = 'x', long, default_value_t = false)]
+    #[arg(short = 'x', long, default_value_t = false, name = "online")]
     pub use_online: bool,
 
     /// Try offline dictionary first, then the online.
@@ -101,15 +101,15 @@ pub struct LookUp {
 #[derive(Args, Debug)]
 pub struct List {
     /// Sort lexicographically.
-    #[arg(short, long, default_value_t = false)]
+    #[arg(short, long, default_value_t = false, name = "sort")]
     pub sort_alphabetically: bool,
 
     /// Output to a table.
-    #[arg(short, long, default_value_t = false)]
+    #[arg(short, long, default_value_t = false, name = "table")]
     pub format_as_table: bool,
 
     /// The number of columns in the table.
-    #[arg(short, long, default_value_t = 5, requires("table"))]
+    #[arg(short, long, default_value_t = 5, name = "column", requires("table"))]
     pub max_column: usize,
 
     /// The difficulty level of the word.
