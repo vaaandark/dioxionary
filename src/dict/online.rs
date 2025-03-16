@@ -162,7 +162,7 @@ fn parse_english_to_chinese(html: &Html) -> Result<String> {
     Ok(res)
 }
 
-/// Get the diffculty level of the word from html.
+/// Get the difficulty level of the word from html.
 fn extract_difficulty_levels(html: &Html) -> Result<Vec<String>> {
     let types = Selector::parse(".exam_type-value")
         .map_err(|_| anyhow!("Failed to select the fields of .exam_type-value in the HTML body"))?;

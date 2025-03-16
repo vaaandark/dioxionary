@@ -24,7 +24,7 @@ fn ensure_cache_directory() -> Result<PathBuf> {
     Ok(path)
 }
 
-/// Inser history record.
+/// Insert history record.
 pub fn insert_history_record(word: &str, difficulty_levels: Vec<DifficultyLevel>) -> Result<()> {
     let date = Utc::now().timestamp();
 
