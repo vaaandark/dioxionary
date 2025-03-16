@@ -33,9 +33,9 @@ cargo install dioxionary
 ### 启用参数补全
 
 ```console
-$ eval "$(dioxionary -c bash)" # for bash
-$ eval "$(dioxionary -c zsh)"  # for zsh
-$ eval "$(dioxionary -c fish)" # for fish
+$ eval "$(dioxionary completion bash)" # for bash
+$ eval "$(dioxionary completion zsh)"  # for zsh
+$ eval "$(dioxionary completion fish)" # for fish
 ```
 
 可以将上述命令直接写到 shell 的配置文件中。

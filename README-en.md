@@ -33,9 +33,9 @@ cargo install dioxionary
 ### Enable argument completion
 
 ```console
-$ eval "$(dioxionary -c bash)" # for bash
-$ eval "$(dioxionary -c zsh)"  # for zsh
-$ eval "$(dioxionary -c fish)" # for fish
+$ eval "$(dioxionary completion bash)" # for bash
+$ eval "$(dioxionary completion zsh)"  # for zsh
+$ eval "$(dioxionary completion fish)" # for fish
 ```
 
 You can write the above commands directly into the configuration file of your shell.
