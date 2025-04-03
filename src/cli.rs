@@ -23,30 +23,6 @@ pub struct Cli {
     /// Dioxionary subcommands.
     #[command(subcommand)]
     pub action: Option<Action>,
-
-    /// Specify local dictionary.
-    #[arg(short, long)]
-    pub local_dicts: Option<PathBuf>,
-
-    /// Use online dictionary.
-    #[arg(short = 'x', long, default_value_t = false)]
-    pub use_online: bool,
-
-    /// Try offline dictionary first, then the online.
-    #[arg(short = 'L', long, default_value_t = true)]
-    pub local_first: bool,
-
-    /// Disable fuzzy search, only use exact search, conflict with `-x`.
-    #[arg(short, long, default_value_t = false)]
-    pub exact_search: bool,
-
-    /// Play word pronunciation.
-    #[cfg(feature = "pronunciation")]
-    #[arg(short, long, default_value_t = false)]
-    pub read_aloud: bool,
-
-    /// The word being looked up.
-    pub word: Option<Vec<String>>,
 }
 
 /// Dioxionary subcommands.
