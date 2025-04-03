@@ -12,15 +12,23 @@ use std::env;
 fn main() -> Result<()> {
     let cli = match Cli::try_parse() {
         Ok(c) => c,
-        Err(_) => {
-            // Maybe omit the subcommand, so insert it
-            let mut args = std::env::args().collect::<Vec<_>>();
-            args.insert(1, "lookup".to_string());
-            Cli::parse_from(args)
+        Err(e) => {
+            match e.kind() {
+                clap::error::ErrorKind::InvalidSubcommand
+                | clap::error::ErrorKind::DisplayHelpOnMissingArgumentOrSubcommand => {
+                    // Maybe omit the subcommand, so insert it
+                    let mut args = std::env::args().collect::<Vec<_>>();
+                    args.insert(1, "lookup".to_string());
+                    Cli::parse_from(args)
+                }
+                _ => {
+                    e.exit();
+                }
+            }
         }
     };
 
-    match cli.action.unwrap() {
+    match cli.action {
         Action::LookUp(look_up) => {
             let options = DictOptions::default()
                 .prioritize_offline(look_up.local_first)

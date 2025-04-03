@@ -22,7 +22,7 @@ use clap_complete::Shell;
 pub struct Cli {
     /// Dioxionary subcommands.
     #[command(subcommand)]
-    pub action: Option<Action>,
+    pub action: Action,
 }
 
 /// Dioxionary subcommands.
