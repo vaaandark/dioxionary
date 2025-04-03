@@ -3,7 +3,7 @@ name: Release
 on:
   push:
     tags:
-      - 'v[0-9]+.[0-9]+.[0-9]+' # stable version only
+      - "*"
 
   workflow_dispatch:
 
@@ -81,15 +81,6 @@ jobs:
           profile: minimal
           toolchain: 1.81
           default: true
-
-      - name: Cargo Verison
-        id: verison
-        uses: dimitrmo/cargo-verison-action@v1.0.17
-        with:
-          message: "Release %s
-           
-           [skip ci]
-           "
       
       - name: Install OpenSSL and libasound
         if: matrix.os == 'ubuntu-latest'
