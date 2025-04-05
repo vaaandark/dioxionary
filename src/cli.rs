@@ -28,14 +28,16 @@ pub struct Cli {
 /// Dioxionary subcommands.
 #[derive(clap::Subcommand, Debug)]
 pub enum Action {
-    /// LookUp the following word, default offline dictionary.
-    #[command(name = "lookup")]
+    /// Look up the following word, default offline dictionary.
+    #[command(name = "lookup", visible_alias = "l")]
     LookUp(LookUp),
 
     /// List the specific difficulty level records.
+    #[command(visible_alias = "ls")]
     List(List),
 
     /// Count the number of each difficulty level records.
+    #[command(visible_alias = "c")]
     Count,
 
     /// Display list of available dictionaries and exit.
