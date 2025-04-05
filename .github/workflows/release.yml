@@ -76,6 +76,9 @@ jobs:
             features: ""
     steps:
       - uses: actions/checkout@v2
+        with:
+          ref: ${{ github.ref }}
+
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal
