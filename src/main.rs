@@ -15,7 +15,8 @@ fn main() -> Result<()> {
         Err(e) => {
             match e.kind() {
                 clap::error::ErrorKind::InvalidSubcommand
-                | clap::error::ErrorKind::DisplayHelpOnMissingArgumentOrSubcommand => {
+                | clap::error::ErrorKind::DisplayHelpOnMissingArgumentOrSubcommand
+                | clap::error::ErrorKind::UnknownArgument => {
                     // Maybe omit the subcommand, so insert it
                     let mut args = std::env::args().collect::<Vec<_>>();
                     args.insert(1, "lookup".to_string());
