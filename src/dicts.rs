@@ -1,7 +1,10 @@
 #[cfg(feature = "pronunciation")]
 use crate::pronunciation;
 use crate::{
-    dict::{offline::OfflineDict, online::OnlineDict, Dict, LookUpResult, LookUpResultItem},
+    dict::{
+        llm::LlmDict, offline::OfflineDict, online::OnlineDict, Dict, LookUpResult,
+        LookUpResultItem,
+    },
     history,
 };
 use anyhow::{Context, Result};
@@ -14,20 +17,35 @@ pub struct DictManager {
     options: DictOptions,
     online_dict: Box<dyn Dict>,
     offline_dicts: Vec<Box<dyn Dict>>,
+    llm_dicts: Vec<Box<dyn Dict>>,
 }
 
 impl DictManager {
-    pub fn new<P: AsRef<Path>>(offline_dict_path: Option<P>, options: DictOptions) -> Result<Self> {
+    pub fn new<P: AsRef<Path>>(
+        offline_dict_path: Option<P>,
+        llm_dict_config_path: Option<P>,
+        options: DictOptions,
+    ) -> Result<Self> {
         let offline_dicts = if let Some(offline_dict_path) = offline_dict_path {
             let path = offline_dict_path.as_ref();
             load_offline_dicts(path)?
         } else {
             vec![]
         };
+
         let online_dict = Box::new(OnlineDict) as Box<dyn Dict>;
+
+        let llm_dicts = if let Some(llm_dict_config_path) = llm_dict_config_path {
+            let path = llm_dict_config_path.as_ref();
+            load_llm_dicts(path)?
+        } else {
+            vec![]
+        };
+
         Ok(Self {
             online_dict,
             offline_dicts,
+            llm_dicts,
             options,
         })
     }
@@ -95,12 +113,19 @@ impl DictManager {
 
         let enable_fuzzy = !options.exact_match_only;
 
-        let mut dicts = self.offline_dicts.iter().collect::<Vec<_>>();
-        if options.prioritize_online_dict {
-            dicts.insert(0, &self.online_dict);
+        let dicts: Vec<&Box<dyn Dict>> = if options.use_llm_dicts {
+            self.llm_dicts.iter().collect()
         } else {
-            dicts.push(&self.online_dict);
-        }
+            let online_dict = vec![&self.online_dict];
+            if options.prioritize_online_dict {
+                online_dict
+                    .into_iter()
+                    .chain(self.offline_dicts.iter())
+                    .collect()
+            } else {
+                self.offline_dicts.iter().chain(online_dict).collect()
+            }
+        };
 
         let item = if let Some(exact_result) = self.find_exact_match(dicts.iter(), &word) {
             Some(exact_result)
@@ -175,10 +200,28 @@ fn load_offline_dicts<P: AsRef<Path>>(offline_dict_dir: P) -> Result<Vec<Box<dyn
         .collect())
 }
 
+pub fn load_llm_dicts<P: AsRef<Path>>(path: P) -> Result<Vec<Box<dyn Dict>>> {
+    let content = std::fs::read_to_string(path)?;
+    let config: toml::Value = content.parse()?;
+
+    let dicts = config["service"]
+        .as_array()
+        .with_context(|| "Invalid config format")?;
+
+    let mut result = Vec::new();
+    for entry in dicts {
+        let dict: Box<dyn Dict> = entry.clone().try_into::<LlmDict>().map(Box::new)?;
+        result.push(dict);
+    }
+
+    Ok(result)
+}
+
 #[derive(Debug, Clone, Copy)]
 pub struct DictOptions {
     pub prioritize_online_dict: bool,
     pub prioritize_offline_dicts: bool,
+    pub use_llm_dicts: bool,
     pub exact_match_only: bool,
     #[cfg(feature = "pronunciation")]
     pub read_aloud: bool,
@@ -214,6 +257,7 @@ impl Default for DictOptions {
         Self {
             prioritize_online_dict: false,
             prioritize_offline_dicts: true,
+            use_llm_dicts: false,
             exact_match_only: false,
             #[cfg(feature = "pronunciation")]
             read_aloud: false,
@@ -237,6 +281,9 @@ impl DictOptions {
             if prefix.contains("|") {
                 options.exact_match_only = true;
             }
+            if prefix.contains("!") {
+                options.use_llm_dicts = true;
+            }
             #[cfg(feature = "pronunciation")]
             if prefix.contains("~") {
                 options.read_aloud = true;
@@ -252,6 +299,11 @@ impl DictOptions {
 
     pub fn prioritize_offline(mut self, prioritize: bool) -> Self {
         self.prioritize_offline_dicts = prioritize;
+        self
+    }
+
+    pub fn use_llm_dicts(mut self, use_llm: bool) -> Self {
+        self.use_llm_dicts = use_llm;
         self
     }
 
@@ -280,5 +332,23 @@ pub fn default_local_dict_path() -> Option<PathBuf> {
         (Some(dir), _) => Some(dir.to_path_buf()),
         (None, Some(dir)) => Some(dir.to_path_buf()),
         (None, None) => None,
+    }
+}
+
+pub fn default_llm_dict_config_path() -> Option<PathBuf> {
+    let dioxionary_dir = dirs::config_dir()
+        .map(|dir| dir.join("dioxionary"))
+        .filter(|dir| dir.is_dir());
+
+    match dioxionary_dir {
+        Some(dir) => {
+            let llm_config_path = dir.join("llm.toml");
+            if llm_config_path.exists() {
+                Some(llm_config_path)
+            } else {
+                None
+            }
+        }
+        None => None,
     }
 }

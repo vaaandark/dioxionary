@@ -4,7 +4,7 @@ use anyhow::Result;
 use clap::CommandFactory;
 use dioxionary::{
     cli::{Action, Cli, Parser},
-    dicts::{default_local_dict_path, DictManager, DictOptions},
+    dicts::{default_llm_dict_config_path, default_local_dict_path, DictManager, DictOptions},
     history,
 };
 use std::env;
@@ -34,6 +34,7 @@ fn main() -> Result<()> {
             let options = DictOptions::default()
                 .prioritize_offline(look_up.local_first)
                 .prioritize_online(look_up.use_online)
+                .use_llm_dicts(look_up.use_llm)
                 .require_exact_match(look_up.exact_search);
             #[cfg(feature = "pronunciation")]
             let options = options.read_aloud(look_up.read_aloud);
@@ -42,7 +43,8 @@ fn main() -> Result<()> {
             } else {
                 default_local_dict_path()
             };
-            let manager = DictManager::new(local_dicts, options).unwrap();
+            let manager =
+                DictManager::new(local_dicts, default_llm_dict_config_path(), options).unwrap();
             if let Some(words) = look_up.word {
                 words.iter().for_each(|word| manager.query(word));
             } else {
@@ -50,8 +52,12 @@ fn main() -> Result<()> {
             }
         }
         Action::Dicts => {
-            let manager =
-                DictManager::new(default_local_dict_path(), DictOptions::default()).unwrap();
+            let manager = DictManager::new(
+                default_local_dict_path(),
+                default_llm_dict_config_path(),
+                DictOptions::default(),
+            )
+            .unwrap();
             manager.list_dicts();
         }
         Action::Count => {
