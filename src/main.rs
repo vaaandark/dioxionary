@@ -10,15 +10,25 @@ use dioxionary::{
 use std::env;
 
 fn main() -> Result<()> {
-    let mut cli = Cli::parse();
+    let cli = match Cli::try_parse() {
+        Ok(c) => c,
+        Err(e) => {
+            match e.kind() {
+                clap::error::ErrorKind::InvalidSubcommand
+                | clap::error::ErrorKind::DisplayHelpOnMissingArgumentOrSubcommand => {
+                    // Maybe omit the subcommand, so insert it
+                    let mut args = std::env::args().collect::<Vec<_>>();
+                    args.insert(1, "lookup".to_string());
+                    Cli::parse_from(args)
+                }
+                _ => {
+                    e.exit();
+                }
+            }
+        }
+    };
 
-    if cli.action.is_none() {
-        let mut args = std::env::args().collect::<Vec<_>>();
-        args.insert(1, "lookup".to_string());
-        cli = Cli::parse_from(args);
-    }
-
-    match cli.action.unwrap() {
+    match cli.action {
         Action::LookUp(look_up) => {
             let options = DictOptions::default()
                 .prioritize_offline(look_up.local_first)
@@ -39,12 +49,8 @@ fn main() -> Result<()> {
             }
         }
         Action::Dicts => {
-            let local_dicts = if let Some(path) = cli.local_dicts {
-                Some(path)
-            } else {
-                default_local_dict_path()
-            };
-            let manager = DictManager::new(local_dicts, DictOptions::default()).unwrap();
+            let manager =
+                DictManager::new(default_local_dict_path(), DictOptions::default()).unwrap();
             manager.list_dicts();
         }
         Action::Count => {
