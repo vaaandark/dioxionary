@@ -1,3 +1,4 @@
+pub mod llm;
 pub mod offline;
 pub mod online;
 pub mod stardict;
@@ -37,9 +38,9 @@ impl fmt::Display for LookUpResultItem {
 }
 
 impl LookUpResultItem {
-    pub fn new(word: String, translation: String) -> LookUpResultItem {
+    pub fn new(word: impl Into<String>, translation: String) -> LookUpResultItem {
         LookUpResultItem {
-            word,
+            word: word.into(),
             translation,
             difficulty_levels: Vec::new(),
         }

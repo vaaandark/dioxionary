@@ -58,6 +58,10 @@ pub struct LookUp {
     #[arg(short = 'x', long, default_value_t = false, name = "online")]
     pub use_online: bool,
 
+    /// Use LLM dictionary.
+    #[arg(short = 'm', long, default_value_t = false, name = "llm")]
+    pub use_llm: bool,
+
     /// Try offline dictionary first, then the online.
     #[arg(short = 'L', long, default_value_t = true)]
     pub local_first: bool,
