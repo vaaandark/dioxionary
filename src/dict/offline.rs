@@ -1,6 +1,6 @@
 use std::path::Path;
 
-use super::{stardict::StarDict, Dict, LookUpResult, LookUpResultItem};
+use super::{stardict::StarDict, Dict, DictType, LookUpResult, LookUpResultItem};
 use anyhow::{Context, Result};
 
 pub struct OfflineDict {
@@ -23,8 +23,8 @@ impl Dict for OfflineDict {
         &self.name
     }
 
-    fn is_online(&self) -> bool {
-        false
+    fn type_(&self) -> DictType {
+        DictType::StarDict
     }
 
     fn supports_fuzzy_search(&self) -> bool {
@@ -56,7 +56,7 @@ impl Dict for OfflineDict {
         }
     }
 
-    fn word_count(&self) -> usize {
-        self.stardict.word_count()
+    fn word_count(&self) -> Option<usize> {
+        Some(self.stardict.word_count())
     }
 }

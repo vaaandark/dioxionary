@@ -50,6 +50,7 @@ serde = { version = "1.0.219", features = ["serde_derive"] }
 serde_json = "1.0.140"
 rand = "0.9.0"
 toml = "0.8.20"
+derive_more = { version = "2.0.1", features = ["display"] }
 
 [target.'cfg(target_env = "musl")'.dependencies]
 openssl = { version = "0.10", features = ["vendored"] }

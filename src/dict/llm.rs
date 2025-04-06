@@ -3,7 +3,7 @@ use reqwest::blocking::Client;
 use serde::Deserialize;
 use serde_json::json;
 
-use super::{Dict, LookUpResult, LookUpResultItem};
+use super::{Dict, DictType, LookUpResult, LookUpResultItem};
 
 const DEFAULT_PROMPT_TEMPLATE: &str = concat!(
     "如果文本是一个英文单词，则模仿双语词典格式（不要 Markdown 格式）输出读音、释义和例句，",
@@ -134,8 +134,8 @@ impl Dict for LlmDict {
         &self.name
     }
 
-    fn is_online(&self) -> bool {
-        true
+    fn type_(&self) -> DictType {
+        DictType::LLM
     }
 
     fn supports_fuzzy_search(&self) -> bool {
@@ -150,7 +150,7 @@ impl Dict for LlmDict {
         }
     }
 
-    fn word_count(&self) -> usize {
-        0
+    fn word_count(&self) -> Option<usize> {
+        None
     }
 }

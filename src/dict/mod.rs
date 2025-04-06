@@ -5,12 +5,19 @@ pub mod stardict;
 
 use std::fmt;
 
+#[derive(derive_more::Display)]
+pub enum DictType {
+    OnlineDict,
+    StarDict,
+    LLM,
+}
+
 pub trait Dict {
     fn name(&self) -> &str;
-    fn is_online(&self) -> bool;
+    fn type_(&self) -> DictType;
     fn supports_fuzzy_search(&self) -> bool;
     fn look_up(&self, enable_fuzzy: bool, word: &str) -> LookUpResult;
-    fn word_count(&self) -> usize;
+    fn word_count(&self) -> Option<usize>;
 }
 
 pub type DifficultyLevel = String;
