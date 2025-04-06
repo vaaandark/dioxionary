@@ -297,7 +297,7 @@ impl DictOptions {
             if prefix.contains("|") {
                 options.exact_match_only = true;
             }
-            if prefix.contains("!") {
+            if prefix.contains("%") {
                 options.use_llm_dicts = true;
             }
             #[cfg(feature = "pronunciation")]
