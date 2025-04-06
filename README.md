@@ -63,12 +63,13 @@ $ dioxionary [OPTIONS] [WORD]
 
 支持并默认使用模糊搜索(fuzzy search)，在词典中没有找到单词时会输出最相似的一个或多个单词的释义。
 
-使用 `-e` 或者 `--exact-search` 可以关闭模糊搜索。也可以通过在单词前添加 `/` 或者 `|` 来打开或关闭模糊搜索，在单词前添加 `@` 使用网络词典。
+使用 `-e` 或者 `--exact-search` 可以关闭模糊搜索。也可以通过在单词前添加 `/` 或者 `|` 来打开或关闭模糊搜索，在单词前添加 `@` 使用网络词典，在单词前添加 `%` 使用大模型翻译。
 
 ```console
 $ dioxionary /terraria   # 模糊搜索
 $ dioxionary '|terraria' # 非模糊搜索，注意使用引号
 $ dioxionary @terraria   # 使用网络词典
+$ dioxionary %terraria   # 使用大模型翻译
 ```
 
 默认使用本地词典，本地词典目录应当存放在：
@@ -115,6 +116,26 @@ $ dioxionary -x <DICTDIR> <WORD>
 ### 多字典支持
 
 如上文示例中，可以将词典目录分别命名为 `00-XXX`, `01-YYY`, ..., `99-ZZZ` 这样的格式来实现优先级。
+
+### 大模型翻译
+
+大模型翻译的配置应该在本地词典目录下的 `llm.toml` 位置，配置格式应该形如：
+
+```toml
+[[service]]
+name = "DeepSeek"
+model_name = "deepseek-chat"
+api_url = "https://api.deepseek.com/chat/completions"
+targets = ["中文", "English"]
+api_keys = ["xxx"] # your API keys
+
+[[service]]
+name = "GLM"
+model_name = "glm-4-flash"
+api_url = "https://open.bigmodel.cn/api/paas/v4/chat/completions"
+targets = ["中文", "English"]
+api_keys = ["xxx"]
+```
 
 ### 列出记录
 
