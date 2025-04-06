@@ -59,11 +59,6 @@ impl Dict for OnlineDict {
         if let Ok(result) = look_up(word) {
             result
         } else {
-            eprintln!(
-                "{}: {}",
-                self.name(),
-                anyhow::anyhow!("Failed to search online dict")
-            );
             LookUpResult::None
         }
     }
