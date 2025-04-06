@@ -63,12 +63,13 @@ When there is no word to be searched in the parameter, it will enter the interac
 
 Supports and uses fuzzy search by default. When no word is found in the dictionary, it will output the most similar definition of one or more words.
 
-Use `-e` or `--exact-search` to turn off fuzzy search. You can also turn fuzzy search on or off by prefixing a word with `/` or `|`, and use web dictionaries with `@` before a word.
+Use `-e` or `--exact-search` to turn off fuzzy search. You can also turn fuzzy search on or off by prefixing a word with `/` or `|`, use web dictionaries with `@` before a word, and use LLM translation with `%` before a word.
 
 ```console
 $ dioxionary /terraria   # Fuzzy search
 $ dioxionary '|terraria' # Non-fuzzy search, pay attention to use quotation marks
 $ dioxionary @terraria   # Online search
+$ dioxionary %terraria   # LLM translation
 ```
 
 The local dictionary is used by default, and the local dictionary directory should be stored in:
@@ -115,6 +116,26 @@ Use -r or prefix the word with ~ to pronounce the word.
 ### Multiple dictionary support
 
 As in the above example, the dictionary directories can be named in the format of `00-XXX`, `01-YYY`, ..., `99-ZZZ` to achieve priority.
+
+### LLM Translation
+
+The configuration of LLM translation should be in the `llm.toml` location under the local dictionary directory. The configuration format should be as follows:
+
+```toml
+[[service]]
+name = "DeepSeek"
+model_name = "deepseek-chat"
+api_url = "https://api.deepseek.com/chat/completions"
+targets = ["中文", "English"]
+api_keys = ["xxx"] # your API keys
+
+[[service]]
+name = "GLM"
+model_name = "glm-4-flash"
+api_url = "https://open.bigmodel.cn/api/paas/v4/chat/completions"
+targets = ["中文", "English"]
+api_keys = ["xxx"]
+```
 
 ### List records
 
