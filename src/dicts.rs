@@ -58,9 +58,11 @@ impl DictManager {
         dicts.find_map(|dict| {
             let result = dict.look_up(false, word);
             match result {
-                LookUpResult::None => None,
                 LookUpResult::Exact(item) => Some(item),
-                LookUpResult::Fuzzy(_) => None,
+                _ => {
+                    eprintln!("Failed to look up `{}` in dict {}", word, dict.name(),);
+                    None
+                }
             }
         })
     }
@@ -78,9 +80,12 @@ impl DictManager {
                 }
                 let result = dict.look_up(true, word);
                 match result {
-                    LookUpResult::None => None,
                     LookUpResult::Exact(item) => Some(vec![item]),
                     LookUpResult::Fuzzy(items) => Some(items),
+                    LookUpResult::None => {
+                    	eprintln!("Failed to fuzzily look up `{}` in dict {}", word, dict.name(),);
+						None
+					}
                 }
             })
             .unwrap_or_default()
@@ -113,18 +118,16 @@ impl DictManager {
 
         let enable_fuzzy = !options.exact_match_only;
 
-        let dicts: Vec<&Box<dyn Dict>> = if options.use_llm_dicts {
-            self.llm_dicts.iter().collect()
-        } else if options.prioritize_online_dict {
-            self.online_dicts
-                .iter()
-                .chain(&self.offline_dicts)
-                .collect()
+        let dicts = if options.prioritize_online_dict {
+            self.online_dicts.iter().chain(&self.offline_dicts)
         } else {
-            self.offline_dicts
-                .iter()
-                .chain(&self.online_dicts)
-                .collect()
+            self.offline_dicts.iter().chain(&self.online_dicts)
+        };
+
+        let dicts: Vec<_> = if options.use_llm_dicts {
+            self.llm_dicts.iter().chain(dicts).collect()
+        } else {
+            dicts.chain(&self.llm_dicts).collect()
         };
 
         let item = if let Some(exact_result) = self.find_exact_match(dicts.iter(), &word) {
