@@ -83,9 +83,13 @@ impl DictManager {
                     LookUpResult::Exact(item) => Some(vec![item]),
                     LookUpResult::Fuzzy(items) => Some(items),
                     LookUpResult::None => {
-                    	eprintln!("Failed to fuzzily look up `{}` in dict {}", word, dict.name(),);
-						None
-					}
+                        eprintln!(
+                            "Failed to fuzzily look up `{}` in dict {}",
+                            word,
+                            dict.name(),
+                        );
+                        None
+                    }
                 }
             })
             .unwrap_or_default()
