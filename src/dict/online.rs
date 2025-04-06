@@ -5,7 +5,7 @@ use itertools::{
 };
 use scraper::{Html, Selector};
 
-use super::{Dict, LookUpResult, LookUpResultItem};
+use super::{Dict, DictType, LookUpResult, LookUpResultItem};
 
 #[derive(Default)]
 pub struct OnlineDict;
@@ -47,8 +47,8 @@ impl Dict for OnlineDict {
         "Youdao"
     }
 
-    fn is_online(&self) -> bool {
-        true
+    fn type_(&self) -> DictType {
+        DictType::OnlineDict
     }
 
     fn supports_fuzzy_search(&self) -> bool {
@@ -68,8 +68,8 @@ impl Dict for OnlineDict {
         }
     }
 
-    fn word_count(&self) -> usize {
-        0
+    fn word_count(&self) -> Option<usize> {
+        None
     }
 }
 

@@ -15,7 +15,7 @@ use std::path::{Path, PathBuf};
 
 pub struct DictManager {
     options: DictOptions,
-    online_dict: Box<dyn Dict>,
+    online_dicts: Vec<Box<dyn Dict>>,
     offline_dicts: Vec<Box<dyn Dict>>,
     llm_dicts: Vec<Box<dyn Dict>>,
 }
@@ -33,7 +33,7 @@ impl DictManager {
             vec![]
         };
 
-        let online_dict = Box::new(OnlineDict) as Box<dyn Dict>;
+        let online_dict = vec![Box::new(OnlineDict) as Box<dyn Dict>];
 
         let llm_dicts = if let Some(llm_dict_config_path) = llm_dict_config_path {
             let path = llm_dict_config_path.as_ref();
@@ -43,7 +43,7 @@ impl DictManager {
         };
 
         Ok(Self {
-            online_dict,
+            online_dicts: online_dict,
             offline_dicts,
             llm_dicts,
             options,
@@ -115,16 +115,16 @@ impl DictManager {
 
         let dicts: Vec<&Box<dyn Dict>> = if options.use_llm_dicts {
             self.llm_dicts.iter().collect()
+        } else if options.prioritize_online_dict {
+            self.online_dicts
+                .iter()
+                .chain(&self.offline_dicts)
+                .collect()
         } else {
-            let online_dict = vec![&self.online_dict];
-            if options.prioritize_online_dict {
-                online_dict
-                    .into_iter()
-                    .chain(self.offline_dicts.iter())
-                    .collect()
-            } else {
-                self.offline_dicts.iter().chain(online_dict).collect()
-            }
+            self.offline_dicts
+                .iter()
+                .chain(&self.online_dicts)
+                .collect()
         };
 
         let item = if let Some(exact_result) = self.find_exact_match(dicts.iter(), &word) {
@@ -171,15 +171,28 @@ impl DictManager {
         let mut table: Table = Table::new();
         table.add_row(Row::new(vec![
             Cell::new("Dictionary's name").with_style(Attr::Bold),
+            Cell::new("Type").with_style(Attr::Bold),
             Cell::new("Word count").with_style(Attr::Bold),
         ]));
-        self.offline_dicts.iter().for_each(|dict| {
-            let row = Row::new(vec![
-                Cell::new(dict.name()),
-                Cell::new(dict.word_count().to_string().as_str()),
-            ]);
-            table.add_row(row);
-        });
+
+        self.offline_dicts
+            .iter()
+            .chain(&self.online_dicts)
+            .chain(&self.llm_dicts)
+            .for_each(|dict| {
+                let row = Row::new(vec![
+                    Cell::new(dict.name()),
+                    Cell::new(dict.type_().to_string().as_str()),
+                    Cell::new(
+                        dict.word_count()
+                            .map(|n| n.to_string())
+                            .unwrap_or("-".to_owned())
+                            .as_str(),
+                    ),
+                ]);
+                table.add_row(row);
+            });
+
         table.printstd();
     }
 }
