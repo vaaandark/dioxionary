@@ -59,9 +59,9 @@ openssl = { version = "0.10", features = ["vendored"] }
 pronunciation = ["dep:rodio"]
 
 [build-dependencies]
-vergen = { version = "7.4.2", default-features = false, features = [
+vergen = { version = "9.0.4", default-features = false, features = [
 	"build",
-	"git",
 	"cargo",
 ] }
+vergen-git2 = { version = "1.0.5", features = ["build", "cargo", "emit_and_set", "rustc", "si"] }
 anyhow = "1.0"
