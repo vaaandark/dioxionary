@@ -81,7 +81,7 @@ impl LlmDict {
         let prompt = self.build_prompt(text);
         let api_key = self
             .api_keys
-            .get((self.api_keys.len() as f64 * rand::random::<f64>()) as usize)
+            .get(rand::random_range(0..self.api_keys.len()))
             .with_context(|| "No API key available")?;
         self.chat(prompt, api_key)
     }
