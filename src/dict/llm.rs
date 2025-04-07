@@ -17,7 +17,7 @@ fn default_prompt_template() -> String {
     DEFAULT_PROMPT_TEMPLATE.to_string()
 }
 
-fn default_temperature() -> f32 {
+fn default_temperature() -> f64 {
     0.7
 }
 
@@ -36,7 +36,7 @@ pub struct LlmDict {
     #[serde(default = "default_prompt_template")]
     pub prompt_template: String,
     #[serde(default = "default_temperature")]
-    pub temperature: f32,
+    pub temperature: f64,
 }
 
 impl LlmDict {
